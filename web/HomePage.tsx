@@ -4,8 +4,9 @@ import { ArrowDown } from "./Icons/ArrowDown";
 import { CaretDown } from "./Icons/CaretDown";
 
 export function HomePage() {
-  const [fromToken, setFromToken] = useState("WETH")
-  const [toToken, setToToken] = useState("WBTC")
+  const [fromToken, setFromToken] = useState("WETH");
+  const [toToken, setToToken] = useState("WBTC");
+  const [amount, setAmount] = useState("");
 
   return (
     <div className="home__content">
@@ -24,7 +25,19 @@ export function HomePage() {
           </div>
           <div className="panel__column">
             <label className="label text-color--2">Amount</label>
-            <div className="action-input-view__input">8.5213123</div>
+            <input
+              className="action-input-view__input"
+              placeholder="0"
+              autoComplete="off"
+              value={amount}
+              inputMode="decimal"
+              type="number"
+              autoCorrect="off"
+              spellCheck="false"
+              onChange={(event) => {
+                setAmount(event.target.value);
+              }}
+            />
           </div>
           <div className="panel__row panel__row__center">
             <ArrowDown className="svg--icon--2" />
@@ -51,63 +64,71 @@ export function HomePage() {
             </button>
           </div>
           <table className="pos__summary">
-            <tr>
-              <td>
-                <label className="label text-color--2">Position Summary</label>
-              </td>
-              <td>
-                <label className="label text-color--2">Current</label>
-              </td>
-              <td>
-                <label className="label text-color--2">Target</label>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <label className="label text-color--2">Collateral Value</label>
-              </td>
-              <td>
-                <label className="label text-color--1">$3,591.77</label>
-              </td>
-              <td>
-                <label className="label text-color--1">$3,591.77</label>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <label className="label text-color--2">Liquidation Point</label>
-              </td>
-              <td>
-                <label className="label text-color--1">$1,185.28</label>
-              </td>
-              <td>
-                <label className="label text-color--1">$1,185.28</label>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <label className="label text-color--2">Borrow Capacity</label>
-              </td>
-              <td>
-                <label className="label text-color--1">$2,945.25</label>
-              </td>
-              <td>
-                <label className="label text-color--1">$2,945.25</label>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <label className="label text-color--2">
-                  Available to Borrow
-                </label>
-              </td>
-              <td>
-                <label className="label text-color--1">$1,945.17</label>
-              </td>
-              <td>
-                <label className="label text-color--1">$1,945.17</label>
-              </td>
-            </tr>
+            <tbody>
+              <tr>
+                <td>
+                  <label className="label text-color--2">
+                    Position Summary
+                  </label>
+                </td>
+                <td>
+                  <label className="label text-color--2">Current</label>
+                </td>
+                <td>
+                  <label className="label text-color--2">Target</label>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <label className="label text-color--2">
+                    Collateral Value
+                  </label>
+                </td>
+                <td>
+                  <label className="label text-color--1">$3,591.77</label>
+                </td>
+                <td>
+                  <label className="label text-color--1">$3,591.77</label>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <label className="label text-color--2">
+                    Liquidation Point
+                  </label>
+                </td>
+                <td>
+                  <label className="label text-color--1">$1,185.28</label>
+                </td>
+                <td>
+                  <label className="label text-color--1">$1,185.28</label>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <label className="label text-color--2">Borrow Capacity</label>
+                </td>
+                <td>
+                  <label className="label text-color--1">$2,945.25</label>
+                </td>
+                <td>
+                  <label className="label text-color--1">$2,945.25</label>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <label className="label text-color--2">
+                    Available to Borrow
+                  </label>
+                </td>
+                <td>
+                  <label className="label text-color--1">$1,945.17</label>
+                </td>
+                <td>
+                  <label className="label text-color--1">$1,945.17</label>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
