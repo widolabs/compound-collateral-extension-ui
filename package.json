@@ -32,6 +32,7 @@
     "compound-styles": "https://github.com/compound-finance/compound-styles.git#fc29b8a832c698920f2fcf7a06d978c4580a48e1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-outside-click-handler": "^1.3.0",
     "rollup-plugin-polyfill-node": "^0.10.2"
   },
   "devDependencies": {

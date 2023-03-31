@@ -8,92 +8,98 @@
   width: 2.25rem;
   height: 2.25rem;
 
+  &--small {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: -0.4rem 0;
+  }
+
   &--AAVE {
-    background-image: url('/images/assets/asset_AAVE.svg');
+    background-image: url("/images/assets/asset_AAVE.svg");
   }
 
   &--AVALANCHE {
-    background-image: url('/images/assets/asset_AVALANCHE.svg');
+    background-image: url("/images/assets/asset_AVALANCHE.svg");
   }
 
   &--FEI {
-    background-image: url('/images/assets/asset_FEI.svg');
+    background-image: url("/images/assets/asset_FEI.svg");
   }
 
   &--BAT {
-    background-image: url('/images/assets/asset_BAT.svg');
+    background-image: url("/images/assets/asset_BAT.svg");
   }
 
   &--COMP {
-    background-image: url('/images/assets/asset_COMP.svg');
+    background-image: url("/images/assets/asset_COMP.svg");
   }
 
   &--DAI {
-    background-image: url('/images/assets/asset_DAI.svg');
+    background-image: url("/images/assets/asset_DAI.svg");
   }
 
   &--ETH,
   &--WETH {
-    background-image: url('/images/assets/asset_ETH.svg');
+    background-image: url("/images/assets/asset_ETH.svg");
   }
 
   &--ETHEREUM {
-    background-image: url('/images/assets/asset_ETHEREUM.svg');
+    background-image: url("/images/assets/asset_ETHEREUM.svg");
   }
 
   &--LINK {
-    background-image: url('/images/assets/asset_LINK.svg');
+    background-image: url("/images/assets/asset_LINK.svg");
   }
 
   &--MKR {
-    background-image: url('/images/assets/asset_MKR.svg');
+    background-image: url("/images/assets/asset_MKR.svg");
   }
 
   &--REP {
-    background-image: url('/images/assets/asset_REP.svg');
+    background-image: url("/images/assets/asset_REP.svg");
   }
 
   &--SAI {
-    background-image: url('/images/assets/asset_SAI.svg');
+    background-image: url("/images/assets/asset_SAI.svg");
   }
 
   &--SUSHI {
-    background-image: url('/images/assets/asset_SUSHI.svg');
+    background-image: url("/images/assets/asset_SUSHI.svg");
   }
 
   &--TUSD {
-    background-image: url('/images/assets/asset_TUSD.svg');
+    background-image: url("/images/assets/asset_TUSD.svg");
   }
 
   &--UNI {
-    background-image: url('/images/assets/asset_UNI.svg');
+    background-image: url("/images/assets/asset_UNI.svg");
   }
 
   &--USDC {
-    background-image: url('/images/assets/asset_USDC.svg');
+    background-image: url("/images/assets/asset_USDC.svg");
   }
 
   &--USDP {
-    background-image: url('/images/assets/asset_USDP.svg');
+    background-image: url("/images/assets/asset_USDP.svg");
   }
 
   &--USDT {
-    background-image: url('/images/assets/asset_USDT.svg');
+    background-image: url("/images/assets/asset_USDT.svg");
   }
 
   &--WBTC,
   &--WBTC2 {
-    background-image: url('/images/assets/asset_BTC.svg');
+    background-image: url("/images/assets/asset_BTC.svg");
   }
 
   &--YFI {
-    background-image: url('/images/assets/asset_YFI.svg');
+    background-image: url("/images/assets/asset_YFI.svg");
   }
 
   &--ZRX {
-    background-image: url('/images/assets/asset_ZRX.svg');
+    background-image: url("/images/assets/asset_ZRX.svg");
   }
   &--V2 {
-    background-image: url('/images/assets/asset_V2.svg');
+    background-image: url("/images/assets/asset_V2.svg");
   }
 }
