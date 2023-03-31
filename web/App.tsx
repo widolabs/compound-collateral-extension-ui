@@ -1,5 +1,5 @@
 import "../styles/main.scss";
-import { RPC } from "@compound-finance/comet-extension";
+import { InMessage, OutMessage, RPC } from "@compound-finance/comet-extension";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import ERC20 from "../abis/ERC20";
 import Comet from "../abis/Comet";
@@ -20,6 +20,7 @@ import { CircleCheckmark } from "./Icons/CircleCheckmark";
 import { ArrowDown } from "./Icons/ArrowDown";
 import { CaretDown } from "./Icons/CaretDown";
 import { HomePage } from "./HomePage";
+import { SelectedMarket } from "@compound-finance/comet-extension/dist/CometState";
 
 interface AppProps {
   rpc?: RPC;
@@ -71,11 +72,6 @@ export function App<N extends Network>({
 }: AppPropsExt<N>) {
   let { cTokenNames } = networkConfig;
 
-  rpc?.sendRPC({ type: "getSelectedMarket" }).then((res) => {
-    console.log("📜 LOG > rpc?.sendRPC > res:", res);
-  });
-  console.log("📜 LOG > rpc?.sendRPC > rpc:", rpc);
-
   const signer = useMemo(() => {
     return web3.getSigner().connectUnchecked();
   }, [web3, account]);
@@ -95,6 +91,19 @@ export function App<N extends Network>({
     () => new Contract(networkConfig.rootsV3.comet, Comet, signer),
     [signer]
   );
+
+  const [selectedMarket, setSelectedMarket] = useState<SelectedMarket>();
+
+  useEffect(() => {
+    rpc?.sendRPC({ type: "getSelectedMarket" }).then((result) => {
+      result = result as OutMessage<{
+        type: "getSelectedMarket";
+      }>;
+
+      setSelectedMarket(result.selectedMarket);
+    });
+  }, [rpc]);
+
 
   async function enableExt() {
     console.log("enabling ext");
@@ -133,6 +142,10 @@ export function App<N extends Network>({
           )}
         </div>
         <HomePage />
+        <p>Market Info</p>
+        <p>chainId: {selectedMarket?.chainId}</p>
+        <p>baseAssetSymbol: {selectedMarket?.baseAssetSymbol}</p>
+        <p>marketAddress: {selectedMarket?.marketAddress}</p>
       </div>
     </div>
   );
