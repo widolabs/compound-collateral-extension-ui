@@ -1,23 +1,34 @@
-import '../styles/main.scss';
-import { RPC } from '@compound-finance/comet-extension';
-import { Fragment, useEffect, useMemo, useState } from 'react';
-import ERC20 from '../abis/ERC20';
-import Comet from '../abis/Comet';
-import { CTokenSym, Network, NetworkConfig, getNetwork, getNetworkById, getNetworkConfig, isNetwork, showNetwork } from './Network';
-import { JsonRpcProvider } from '@ethersproject/providers';
-import { Contract, ContractInterface } from '@ethersproject/contracts';
-import { Close } from './Icons/Close';
-import { CircleCheckmark } from './Icons/CircleCheckmark';
+import "../styles/main.scss";
+import { RPC } from "@compound-finance/comet-extension";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import ERC20 from "../abis/ERC20";
+import Comet from "../abis/Comet";
+import {
+  CTokenSym,
+  Network,
+  NetworkConfig,
+  getNetwork,
+  getNetworkById,
+  getNetworkConfig,
+  isNetwork,
+  showNetwork,
+} from "./Network";
+import { JsonRpcProvider } from "@ethersproject/providers";
+import { Contract, ContractInterface } from "@ethersproject/contracts";
+import { Close } from "./Icons/Close";
+import { CircleCheckmark } from "./Icons/CircleCheckmark";
+import { ArrowDown } from "./Icons/ArrowDown";
+import { CaretDown } from "./Icons/CaretDown";
 
 interface AppProps {
-  rpc?: RPC,
-  web3: JsonRpcProvider
+  rpc?: RPC;
+  web3: JsonRpcProvider;
 }
 
 type AppPropsExt<N extends Network> = AppProps & {
-  account: string,
-  networkConfig: NetworkConfig<N>
-}
+  account: string;
+  networkConfig: NetworkConfig<N>;
+};
 
 interface AccountState<Network> {
   extEnabled: boolean;
@@ -37,7 +48,7 @@ function usePoll(timeout: number) {
       }, delay);
     }
     loop(1, timeout);
-    return () => clearTimeout(t)
+    return () => clearTimeout(t);
   }, []);
 
   return timer;
@@ -51,10 +62,18 @@ function useAsyncEffect(fn: () => Promise<void>, deps: any[] = []) {
   }, deps);
 }
 
-
-
-export function App<N extends Network>({rpc, web3, account, networkConfig}: AppPropsExt<N>) {
+export function App<N extends Network>({
+  rpc,
+  web3,
+  account,
+  networkConfig,
+}: AppPropsExt<N>) {
   let { cTokenNames } = networkConfig;
+
+  rpc?.sendRPC({ type: "getSelectedMarket" }).then((res) => {
+    console.log("📜 LOG > rpc?.sendRPC > res:", res);
+  });
+  console.log("📜 LOG > rpc?.sendRPC > rpc:", rpc);
 
   const signer = useMemo(() => {
     return web3.getSigner().connectUnchecked();
@@ -63,10 +82,18 @@ export function App<N extends Network>({rpc, web3, account, networkConfig}: AppP
   const initialAccountState = () => ({
     extEnabled: false,
   });
-  const [accountState, setAccountState] = useState<AccountState<Network>>(initialAccountState);
+  const [accountState, setAccountState] = useState<AccountState<Network>>(
+    initialAccountState
+  );
 
-  const ext = useMemo(() => new Contract(networkConfig.extAddress, networkConfig.extAbi, signer), [signer]);
-  const comet = useMemo(() => new Contract(networkConfig.rootsV3.comet, Comet, signer), [signer]);
+  const ext = useMemo(
+    () => new Contract(networkConfig.extAddress, networkConfig.extAbi, signer),
+    [signer]
+  );
+  const comet = useMemo(
+    () => new Contract(networkConfig.rootsV3.comet, Comet, signer),
+    [signer]
+  );
 
   async function enableExt() {
     console.log("enabling ext");
@@ -84,59 +111,149 @@ export function App<N extends Network>({rpc, web3, account, networkConfig}: AppP
     <div className="page home">
       <div className="container">
         <div className="masthead L1">
-          <h1 className="L0 heading heading--emphasized">My Comet Extension</h1>
-          { accountState.extEnabled ?
-            <button className="button button--large button--supply" onClick={disableExt}>
+          <h1 className="L0 heading heading--emphasized">
+            Wido Collateral Swaps
+          </h1>
+          {accountState.extEnabled ? (
+            <button
+              className="button button--large button--supply"
+              onClick={disableExt}
+            >
               <CircleCheckmark />
               <label>Enabled</label>
-            </button> :
-            <button className="button button--large button--supply" onClick={enableExt}>Enable</button> }
+            </button>
+          ) : (
+            <button
+              className="button button--large button--supply"
+              onClick={enableExt}
+            >
+              Enable
+            </button>
+          )}
         </div>
         <div className="home__content">
-          <div className="home__assets">
-            <div className="panel panel--assets">
-              <div className="panel__header-row">
-                <label className="L1 label text-color--1">My Extension Dashboard</label>
+          <div className="home__form">
+            <div className="panel">
+              <div className="panel__row">
+                <h6 className="L2 heading text-color--1">Swap collateral</h6>
               </div>
-              <div className="panel__header-row">
-                <label className="label text-color--1">
-                  A dashboard to control how a user utilizes your extension.
-                </label>
-              </div>
-              { null }
-              <div className="panel__header-row">
-                <label className="L1 label text-color--2">Debug Information</label>
+              <div className="panel__column">
                 <label className="label text-color--2">
-                  network={ showNetwork(networkConfig.network) }<br/>
-                  account={ account }<br/>
+                  Collateral to swap
                 </label>
+                <button className="button dropdown">
+                  <span>WETH</span>
+                  <CaretDown />
+                </button>
               </div>
-            </div>
-          </div>
-          <div className="home__sidebar">
-            <div className="position-card__summary">
-              <div className="panel position-card L3">
-                <div className="panel__header-row">
-                  <label className="L1 label text-color--1">Summary</label>
-                </div>
-                <div className="panel__header-row">
-                  <p className="text-color--1">
-                    Further information about your extension.
-                  </p>
-                </div>
+              <div className="panel__column">
+                <label className="label text-color--2">Amount</label>
+                <div className="action-input-view__input">8.5213123</div>
               </div>
+              <div className="panel__row panel__row__center">
+                <ArrowDown className="svg--icon--2" />
+              </div>
+              <div className="panel__column">
+                <label className="label text-color--2">
+                  Collateral to obtain
+                </label>
+                <button className="dropdown">WBTC</button>
+              </div>
+              <div className="panel__row">
+                <label className="label text-color--2">Expected amount</label>
+                <label className="label text-color--1">0.6213123</label>
+              </div>
+              <div className="panel__row">
+                <label className="label text-color--2">Guaranteed amount</label>
+                <label className="label text-color--1">0.5532134</label>
+              </div>
+              <div className="panel__column form_button">
+                <button className="button button--large button--supply">
+                  Swap
+                </button>
+              </div>
+              <table className="pos__summary">
+                <tr>
+                  <td>
+                    <label className="label text-color--2">
+                      Position Summary
+                    </label>
+                  </td>
+                  <td>
+                    <label className="label text-color--2">Current</label>
+                  </td>
+                  <td>
+                    <label className="label text-color--2">Target</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label className="label text-color--2">
+                      Collateral Value
+                    </label>
+                  </td>
+                  <td>
+                    <label className="label text-color--1">$3,591.77</label>
+                  </td>
+                  <td>
+                    <label className="label text-color--1">$3,591.77</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label className="label text-color--2">
+                      Liquidation Point
+                    </label>
+                  </td>
+                  <td>
+                    <label className="label text-color--1">$1,185.28</label>
+                  </td>
+                  <td>
+                    <label className="label text-color--1">$1,185.28</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label className="label text-color--2">
+                      Borrow Capacity
+                    </label>
+                  </td>
+                  <td>
+                    <label className="label text-color--1">$2,945.25</label>
+                  </td>
+                  <td>
+                    <label className="label text-color--1">$2,945.25</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label className="label text-color--2">
+                      Available to Borrow
+                    </label>
+                  </td>
+                  <td>
+                    <label className="label text-color--1">$1,945.17</label>
+                  </td>
+                  <td>
+                    <label className="label text-color--1">$1,945.17</label>
+                  </td>
+                </tr>
+              </table>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
-export default ({rpc, web3}: AppProps) => {
+export default ({ rpc, web3 }: AppProps) => {
   let timer = usePoll(10000);
   const [account, setAccount] = useState<string | null>(null);
-  const [networkConfig, setNetworkConfig] = useState<NetworkConfig<Network> | 'unsupported' | null>(null);
+  const [networkConfig, setNetworkConfig] = useState<
+    NetworkConfig<Network> | "unsupported" | null
+  >(null);
+  console.log("📜 LOG > networkConfig:", networkConfig);
 
   useAsyncEffect(async () => {
     let accounts = await web3.listAccounts();
@@ -152,15 +269,22 @@ export default ({rpc, web3}: AppProps) => {
     if (network) {
       setNetworkConfig(getNetworkConfig(network));
     } else {
-      setNetworkConfig('unsupported');
+      setNetworkConfig("unsupported");
     }
   }, [web3, timer]);
 
   if (networkConfig && account) {
-    if (networkConfig === 'unsupported') {
+    if (networkConfig === "unsupported") {
       return <div>Unsupported network...</div>;
     } else {
-      return <App rpc={rpc} web3={web3} account={account} networkConfig={networkConfig} />;
+      return (
+        <App
+          rpc={rpc}
+          web3={web3}
+          account={account}
+          networkConfig={networkConfig}
+        />
+      );
     }
   } else {
     return <div>Loading...</div>;
