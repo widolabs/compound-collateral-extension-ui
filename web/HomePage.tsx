@@ -10,13 +10,28 @@ interface HomePageProps {
   fromToken: string
   toToken: string
   amount: string
+  assetBalance: string
   setFromToken: (c: string) => void
   setToToken: (c: string) => void
   setAmount: (c: string) => void
+  onMaxClick: () => void
   onSwap: () => void
 }
 
-export function HomePage({ collaterals, fromToken, toToken, amount, setFromToken, setToToken, setAmount, onSwap }: HomePageProps) {
+export function HomePage(
+  {
+    collaterals,
+    fromToken,
+    toToken,
+    amount,
+    assetBalance,
+    onMaxClick,
+    setFromToken,
+    setToToken,
+    setAmount,
+    onSwap
+  }: HomePageProps
+) {
   return (
     <div className="home__content">
       <div className="home__form">
@@ -47,6 +62,9 @@ export function HomePage({ collaterals, fromToken, toToken, amount, setFromToken
                 setAmount(event.target.value);
               }}
             />
+            <label className="label text-color--2" style={{ cursor: "pointer" }} onClick={onMaxClick}>
+              Balance: {assetBalance}
+            </label>
           </div>
           <div className="panel__row panel__row__center">
             <ArrowDown className="svg--icon--2"/>

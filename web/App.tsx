@@ -41,6 +41,20 @@ function App(
   const [swapQuote, setSwapQuote] = useState<CollateralSwapRoute | undefined>();
   const [balances, setBalances] = useState<UserAssets>([]);
 
+  const getFromTokenUnit = () => {
+    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
+    return BigNumber.from("1" + "0".repeat(decimals))
+  }
+
+  const getFromTokenBalance = (): BigNumber => {
+    for (const asset of balances) {
+      if (asset.name === selectedFromToken) {
+        return asset.balance
+      }
+    }
+    return BigNumber.from(0);
+  }
+
   // initialize SDK
   const widoSdk = useMemo(() => {
     const signer = web3.getSigner().connectUnchecked();
@@ -58,6 +72,24 @@ function App(
     const balances = await widoSdk.getUserCollaterals();
     setBalances(balances);
   }, [widoSdk]);
+
+  // max button
+  const assetBalance = useMemo(() => {
+    const balance = getFromTokenBalance();
+    const _unit = getFromTokenUnit()
+    const integer = balance.div(_unit);
+    const decimals = balance.sub(integer.mul(_unit));
+    return integer.toString() + "." + decimals.toString().substring(0, 4)
+  }, [selectedFromToken, widoSdk])
+
+  const onMaxClick = () => {
+    const balance = getFromTokenBalance();
+    const _unit = getFromTokenUnit()
+    const integer = balance.div(_unit);
+    const decimals = balance.sub(integer.mul(_unit));
+    const balanceString = integer.toString() + "." + decimals.toString()
+    setAmount(balanceString);
+  }
 
   // asset selection
   const selectFromToken = (selection: string) => {
@@ -81,10 +113,8 @@ function App(
   }, [selectedFromToken, selectedToToken, amount])
 
   const quote = useDebouncedCallback(async () => {
-    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
-    const _amount = BigNumber.from(amount);
-    const _unit = BigNumber.from("1" + "0".repeat(decimals))
-    const fromAmount = _amount.mul(_unit);
+    const _unit = getFromTokenUnit()
+    const fromAmount = BigNumber.from(amount).mul(_unit);
     const quote = await widoSdk.getCollateralSwapRoute(
       selectedFromToken,
       selectedToToken,
@@ -120,9 +150,11 @@ function App(
           fromToken={selectedFromToken}
           toToken={selectedToToken}
           amount={amount}
+          assetBalance={assetBalance}
           setFromToken={selectFromToken}
           setToToken={selectToToken}
           setAmount={setAmount}
+          onMaxClick={onMaxClick}
           onSwap={executeSwap}
         />
 
