@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { AssetSelector } from "./components/AssetSelector";
-import { ArrowDown } from "./Icons/ArrowDown";
-import { CaretDown } from "./Icons/CaretDown";
+import { ArrowDown } from "./Icons";
 
 export function HomePage() {
   const [fromToken, setFromToken] = useState("WETH");
