@@ -8,6 +8,8 @@ import { useAsyncEffect } from './lib/useAsyncEffect';
 import { WidoCompoundSdk } from "wido-compound-sdk";
 import { useDebouncedCallback } from 'use-debounce';
 import { CollateralSwapRoute } from 'types/index';
+import { BigNumber } from 'ethers';
+import { Assets, UserAssets } from '../../wido-compound-sdk/src';
 
 interface AppProps {
   rpc?: RPC
@@ -18,9 +20,13 @@ type AppPropsInternal = AppProps & {
   account: string;
 }
 
-interface Collateral {
-  name: string
-  address: string
+function getDecimals(collaterals: Assets, asset: string): number {
+  for (const collateral of collaterals) {
+    if (collateral.name === asset) {
+      return collateral.decimals
+    }
+  }
+  throw new Error("Asset not found");
 }
 
 function App(
@@ -28,11 +34,12 @@ function App(
     rpc, web3, account
   }: AppPropsInternal
 ) {
-  const [supportedCollaterals, setSupportedCollaterals] = useState<Collateral[]>([]);
+  const [supportedCollaterals, setSupportedCollaterals] = useState<Assets>([]);
   const [selectedFromToken, setSelectedFromToken] = useState("");
   const [selectedToToken, setSelectedToToken] = useState("");
   const [amount, setAmount] = useState("");
   const [swapQuote, setSwapQuote] = useState<CollateralSwapRoute | undefined>();
+  const [balances, setBalances] = useState<UserAssets>([]);
 
   // initialize SDK
   const widoSdk = useMemo(() => {
@@ -46,6 +53,13 @@ function App(
     setSupportedCollaterals(collaterals);
   }, [widoSdk]);
 
+  // load user balances
+  useAsyncEffect(async () => {
+    const balances = await widoSdk.getUserCollaterals();
+    setBalances(balances);
+  }, [widoSdk]);
+
+  // asset selection
   const selectFromToken = (selection: string) => {
     if (selection === selectedToToken) {
       setSelectedToToken(selectedFromToken)
@@ -59,6 +73,7 @@ function App(
     setSelectedToToken(selection);
   }
 
+  // quote
   useEffect(() => {
     if (selectedFromToken && selectedToToken && amount) {
       quote()
@@ -66,10 +81,19 @@ function App(
   }, [selectedFromToken, selectedToToken, amount])
 
   const quote = useDebouncedCallback(async () => {
-    const quote = await widoSdk.getCollateralSwapRoute(selectedFromToken, selectedToToken);
+    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
+    const _amount = BigNumber.from(amount);
+    const _unit = BigNumber.from("1" + "0".repeat(decimals))
+    const fromAmount = _amount.mul(_unit);
+    const quote = await widoSdk.getCollateralSwapRoute(
+      selectedFromToken,
+      selectedToToken,
+      fromAmount
+    );
     setSwapQuote(quote)
   }, 1000);
 
+  // execute
   const executeSwap = async () => {
     if (swapQuote) {
       await widoSdk.swapCollateral(swapQuote)

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { AssetSelector } from "./components/AssetSelector";
 import { ArrowDown } from "./Icons";
 import { Label } from './components/Label';
