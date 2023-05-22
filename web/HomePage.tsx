@@ -13,9 +13,10 @@ interface HomePageProps {
   setFromToken: (c: string) => void
   setToToken: (c: string) => void
   setAmount: (c: string) => void
+  onSwap: () => void
 }
 
-export function HomePage({ collaterals, fromToken, toToken, amount, setFromToken, setToToken, setAmount }: HomePageProps) {
+export function HomePage({ collaterals, fromToken, toToken, amount, setFromToken, setToToken, setAmount, onSwap }: HomePageProps) {
   return (
     <div className="home__content">
       <div className="home__form">
@@ -67,7 +68,7 @@ export function HomePage({ collaterals, fromToken, toToken, amount, setFromToken
             <LabelValue text="0.5532134"/>
           </div>
           <div className="panel__column form_button">
-            <button className="button button--large button--supply">
+            <button className="button button--large button--supply" onClick={onSwap}>
               Swap
             </button>
           </div>
