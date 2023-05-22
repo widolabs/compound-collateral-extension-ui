@@ -16,7 +16,7 @@ function StandaloneApp() {
   }, []);
 
   if (web3) {
-    return <App web3={web3 as any} />
+    return <App web3={web3}/>
   } else {
     return <div>Connecting...</div>;
   }
@@ -24,6 +24,6 @@ function StandaloneApp() {
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <StandaloneApp />
+    <StandaloneApp/>
   </React.StrictMode>
 )

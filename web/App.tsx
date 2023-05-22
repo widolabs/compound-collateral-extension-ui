@@ -1,42 +1,54 @@
 import "../styles/main.scss";
-import { OutMessage, RPC } from "@compound-finance/comet-extension";
-import { useEffect, useMemo, useState } from "react";
+import { RPC } from "@compound-finance/comet-extension";
+import { useMemo, useState } from "react";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { HomePage } from "./HomePage";
-import { SelectedMarket } from "@compound-finance/comet-extension/dist/CometState";
 import { usePoll } from './lib/usePoll';
 import { useAsyncEffect } from './lib/useAsyncEffect';
+import { WidoCompoundSdk } from "wido-compound-sdk";
 
 interface AppProps {
-  rpc?: RPC;
-  web3: JsonRpcProvider;
+  rpc?: RPC
+  web3: JsonRpcProvider
 }
 
 type AppPropsInternal = AppProps & {
   account: string;
-};
+}
 
-function App({
-  rpc,
-  web3,
-  account,
-}: AppPropsInternal) {
+function App(
+  {
+    rpc, web3, account
+  }: AppPropsInternal
+) {
+  const [supportedCollaterals, setSupportedCollaterals] = useState<{ name: string, address: string }[]>([]);
+  const [selectedFromToken, setSelectedFromToken] = useState("");
+  const [selectedToToken, setSelectedToToken] = useState("");
+  const [amount, setAmount] = useState("");
 
-  const signer = useMemo(() => {
-    return web3.getSigner().connectUnchecked();
+  const widoSdk = useMemo(() => {
+    const signer = web3.getSigner().connectUnchecked();
+    return new WidoCompoundSdk(signer, "mainnet_usdc")
   }, [web3, account]);
 
-  const [selectedMarket, setSelectedMarket] = useState<SelectedMarket>();
+  useAsyncEffect(async () => {
+    const collaterals = await widoSdk.getSupportedCollaterals();
+    setSupportedCollaterals(collaterals);
+  }, [widoSdk]);
 
-  useEffect(() => {
-    rpc?.sendRPC({ type: "getSelectedMarket" }).then((result) => {
-      result = result as OutMessage<{
-        type: "getSelectedMarket";
-      }>;
+  const selectFromToken = (selection: string) => {
+    if (selection === selectedToToken) {
+      setSelectedToToken(selectedFromToken)
+    }
+    setSelectedFromToken(selection);
+  }
 
-      setSelectedMarket(result.selectedMarket);
-    });
-  }, [rpc]);
+  const selectToToken = (selection: string) => {
+    if (selection === selectedFromToken) {
+      setSelectedFromToken(selectedToToken)
+    }
+    setSelectedToToken(selection);
+  }
 
   return (
     <div className="page home">
@@ -53,12 +65,20 @@ function App({
           </button>
         </div>
 
-        <HomePage/>
+        <HomePage
+          collaterals={supportedCollaterals.map(c => c.name)}
+          fromToken={selectedFromToken}
+          toToken={selectedToToken}
+          amount={amount}
+          setFromToken={selectFromToken}
+          setToToken={selectToToken}
+          setAmount={setAmount}
+        />
 
         <p>Market Info</p>
-        <p>chainId: {selectedMarket?.chainId}</p>
-        <p>baseAssetSymbol: {selectedMarket?.baseAssetSymbol}</p>
-        <p>marketAddress: {selectedMarket?.marketAddress}</p>
+        <p>chainId: </p>
+        <p>baseAssetSymbol: </p>
+        <p>marketAddress: </p>
       </div>
     </div>
   );
@@ -67,7 +87,7 @@ function App({
 export default ({ rpc, web3 }: AppProps) => {
   let timer = usePoll(10000);
   const [account, setAccount] = useState<string | null>(null);
-  const [supportedNetwork, setSupportedNetwork] = useState<boolean>(true);
+  const [isSupportedNetwork, setIsSupportedNetwork] = useState<boolean>(true);
 
   useAsyncEffect(async () => {
     let accounts = await web3.listAccounts();
@@ -77,14 +97,10 @@ export default ({ rpc, web3 }: AppProps) => {
     }
   }, [web3, timer]);
 
-  useAsyncEffect(async () => {
-    let networkWeb3 = await web3.getNetwork();
-    // TODO : check supported network
-  }, [web3, timer]);
-
-  if (!supportedNetwork) {
+  if (!isSupportedNetwork) {
     return <div>Unsupported network...</div>;
   }
+
   if (!account) {
     return <div>Loading...</div>;
   }

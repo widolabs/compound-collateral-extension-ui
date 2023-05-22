@@ -24,30 +24,35 @@ export function AssetSelector({
         <span className={`asset asset--small asset--${value}`}></span>
       </div>
       <div className="market-selector__option__info">
-        <span className="label text-color--1 L1">{value}</span>
+        <span className="label text-color--1 L1">{value ? value : "Select"}</span>
       </div>
-      <CaretDown />
-      {open && (
-        <OutsideClickHandler onOutsideClick={() => setOpen(false)}>
-          <div className="dropdown__content">
-            {options.map((option) => (
-              <div
-                className="market-selector__option"
-                onClick={() => {
-                  onChange(option);
-                }}
-              >
-                <div className="icon icon--centered undefined">
-                  <span className={`asset asset--${option}`}></span>
-                </div>
-                <div className="market-selector__option__info">
-                  <span className="label text-color--1 L1">{option}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </OutsideClickHandler>
-      )}
+      <CaretDown/>
+      {
+        open && (
+          <OutsideClickHandler onOutsideClick={() => setOpen(false)}>
+            <div className="dropdown__content">
+              {
+                options.map((option, index) => (
+                  <div
+                    key={index}
+                    className="market-selector__option"
+                    onClick={() => {
+                      onChange(option);
+                    }}
+                  >
+                    <div className="icon icon--centered undefined">
+                      <span className={`asset asset--${option}`}></span>
+                    </div>
+                    <div className="market-selector__option__info">
+                      <span className="label text-color--1 L1">{option}</span>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+          </OutsideClickHandler>
+        )
+      }
     </button>
   );
 }
