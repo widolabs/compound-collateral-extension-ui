@@ -8,6 +8,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { BigNumber } from 'ethers';
 import { WidoCompoundSdk } from "wido-compound-sdk";
 import { CollateralSwapRoute, Deployments, Assets, UserAssets, Deployment } from 'types/index';
+import { MarketSelector } from './components/MarketSelector';
 
 interface AppProps {
   rpc?: RPC
@@ -160,7 +161,7 @@ export default ({ rpc, web3 }: AppProps) => {
    * Memo to keep updated the max balance when the asset changes
    */
   const assetBalance = useMemo(() => {
-    const {integer, decimal} = balanceParts();
+    const { integer, decimal } = balanceParts();
     // compose visible number
     return integer + "." + decimal.substring(0, 4)
   }, [selectedFromToken, widoSdk])
@@ -182,7 +183,7 @@ export default ({ rpc, web3 }: AppProps) => {
    * It converts the user's balance into a string to set it as `amount`
    */
   const onMaxClick = () => {
-    const {integer, decimal} = balanceParts();
+    const { integer, decimal } = balanceParts();
     // compose string
     const balanceString = integer + "." + decimal
     setAmount(balanceString);
@@ -255,12 +256,17 @@ export default ({ rpc, web3 }: AppProps) => {
           <h1 className="L0 heading heading--emphasized">
             Wido Collateral Swaps
           </h1>
-          <button
-            className="button button--large button--supply"
-            onClick={() => null}
-          >
-            Enable
-          </button>
+          {
+            selectedMarket
+              ? <MarketSelector
+                value={selectedMarket}
+                options={markets}
+                onChange={(selection) => {
+                  setSelectedMarket(selection)
+                }}
+              />
+              : null
+          }
         </div>
 
         <HomePage
