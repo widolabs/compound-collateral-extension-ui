@@ -27,6 +27,7 @@ export default ({ rpc, web3 }: AppProps) => {
   const [amount, setAmount] = useState("");
   const [swapQuote, setSwapQuote] = useState<CollateralSwapRoute | undefined>();
   const [balances, setBalances] = useState<UserAssets>([]);
+  const [isLoading, setLoading] = useState<boolean>(false);
 
   const deployments = WidoCompoundSdk.getDeployments();
 
@@ -104,21 +105,6 @@ export default ({ rpc, web3 }: AppProps) => {
   }
 
   /**
-   * Debounced quote function
-   */
-  const quote = useDebouncedCallback(async () => {
-    if (widoSdk && isSupportedNetwork) {
-      const fromAmount = getFromAmount();
-      const quote = await widoSdk.getCollateralSwapRoute(
-        selectedFromToken,
-        selectedToToken,
-        fromAmount
-      );
-      setSwapQuote(quote)
-    }
-  }, 1000);
-
-  /**
    * Collateral swap execution function
    */
   const executeSwap = async () => {
@@ -177,10 +163,11 @@ export default ({ rpc, web3 }: AppProps) => {
     if (!selectedFromToken) return true
     if (!selectedToToken) return true
     if (!amount) return true
+    if (isLoading) return true
     const fromTokenBalance = getFromTokenBalance()
     const fromAmount = getFromAmount();
     return fromAmount.gt(fromTokenBalance);
-  }, [amount, assetBalance, selectedFromToken, selectedToToken])
+  }, [amount, assetBalance, selectedFromToken, selectedToToken, isLoading])
 
   /**
    * Callback that is executed when the user selects "max amount"
@@ -243,9 +230,28 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   useEffect(() => {
     if (selectedFromToken && selectedToToken && amount) {
+      setLoading(true);
       quote()
     }
   }, [selectedFromToken, selectedToToken, amount])
+
+  /**
+   * Debounced quote function
+   */
+  const quote = useDebouncedCallback(async () => {
+    if (widoSdk && isSupportedNetwork) {
+      const fromAmount = getFromAmount();
+      const quote = await widoSdk.getCollateralSwapRoute(
+        selectedFromToken,
+        selectedToToken,
+        fromAmount
+      ).then((response) => {
+        setLoading(false);
+        return response;
+      })
+      setSwapQuote(quote)
+    }
+  }, 1000);
 
   // guard clauses
   if (!isSupportedNetwork) {
@@ -287,6 +293,8 @@ export default ({ rpc, web3 }: AppProps) => {
           onMaxClick={onMaxClick}
           onSwap={executeSwap}
           disabledButton={disabledButton}
+          swapQuote={swapQuote}
+          isLoading={isLoading}
         />
 
         <p>Market Info</p>

@@ -4,6 +4,7 @@ import { ArrowDown } from "./Icons";
 import { Label } from './components/Label';
 import { LabelValue } from './components/LabelValue';
 import { PositionSummary } from './components/PositionSummary';
+import { CollateralSwapRoute } from 'types/index';
 
 interface HomePageProps {
   collaterals: string[]
@@ -17,6 +18,8 @@ interface HomePageProps {
   onMaxClick: () => void
   onSwap: () => void
   disabledButton: boolean
+  swapQuote?: CollateralSwapRoute
+  isLoading: boolean
 }
 
 export function HomePage(
@@ -32,6 +35,8 @@ export function HomePage(
     setAmount,
     onSwap,
     disabledButton,
+    swapQuote,
+    isLoading,
   }: HomePageProps
 ) {
   return (
@@ -79,14 +84,22 @@ export function HomePage(
               onChange={setToToken}
             />
           </div>
-          <div className="panel__row">
-            <Label text="Expected amount"/>
-            <LabelValue text=".6213123"/>
-          </div>
-          <div className="panel__row">
-            <Label text="Guaranteed amount"/>
-            <LabelValue text="0.5532134"/>
-          </div>
+          {
+            swapQuote
+              ?
+              <>
+                <div className="panel__row">
+                  <Label text="Expected amount"/>
+                  <LabelValue text=".6213123"/>
+                </div>
+                <div className="panel__row">
+                  <Label text="Guaranteed amount"/>
+                  <LabelValue text="0.5532134"/>
+                </div>
+              </>
+              :
+              null
+          }
           <div className="panel__column form_button">
             <button className="button button--large button--supply" onClick={onSwap} disabled={disabledButton}>
               Swap
