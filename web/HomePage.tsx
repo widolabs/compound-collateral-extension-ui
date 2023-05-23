@@ -16,6 +16,7 @@ interface HomePageProps {
   setAmount: (c: string) => void
   onMaxClick: () => void
   onSwap: () => void
+  disabledButton: boolean
 }
 
 export function HomePage(
@@ -29,7 +30,8 @@ export function HomePage(
     setFromToken,
     setToToken,
     setAmount,
-    onSwap
+    onSwap,
+    disabledButton,
   }: HomePageProps
 ) {
   return (
@@ -86,7 +88,7 @@ export function HomePage(
             <LabelValue text="0.5532134"/>
           </div>
           <div className="panel__column form_button">
-            <button className="button button--large button--supply" onClick={onSwap}>
+            <button className="button button--large button--supply" onClick={onSwap} disabled={disabledButton}>
               Swap
             </button>
           </div>

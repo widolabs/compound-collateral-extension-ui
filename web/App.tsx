@@ -75,19 +75,32 @@ function App(
 
   // max button
   const assetBalance = useMemo(() => {
+    if (!selectedFromToken) return "0"
     const balance = getFromTokenBalance();
     const _unit = getFromTokenUnit()
-    const integer = balance.div(_unit);
-    const decimals = balance.sub(integer.mul(_unit));
-    return integer.toString() + "." + decimals.toString().substring(0, 4)
+    // separate parts
+    const integerPart = balance.div(_unit);
+    const decimalPart = balance.sub(integerPart.mul(_unit));
+    // compose visible number
+    return integerPart.toString() + "." + decimalPart.toString().substring(0, 4)
   }, [selectedFromToken, widoSdk])
 
   const onMaxClick = () => {
+    if (!selectedFromToken) return "0"
+    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
     const balance = getFromTokenBalance();
     const _unit = getFromTokenUnit()
-    const integer = balance.div(_unit);
-    const decimals = balance.sub(integer.mul(_unit));
-    const balanceString = integer.toString() + "." + decimals.toString()
+    // separate parts
+    const integerPart = balance.div(_unit);
+    const decimalPart = balance.sub(integerPart.mul(_unit));
+    let decimalPartString = decimalPart.toString()
+    // check if extra zeros required on decimal part
+    if (decimalPartString.length < decimals) {
+      const leftZeros = decimals - decimalPartString.length;
+      decimalPartString = "0".repeat(leftZeros) + decimalPartString
+    }
+    // compose string
+    const balanceString = integerPart.toString() + "." + decimalPartString
     setAmount(balanceString);
   }
 
@@ -113,8 +126,7 @@ function App(
   }, [selectedFromToken, selectedToToken, amount])
 
   const quote = useDebouncedCallback(async () => {
-    const _unit = getFromTokenUnit()
-    const fromAmount = BigNumber.from(amount).mul(_unit);
+    const fromAmount = getFromAmount();
     const quote = await widoSdk.getCollateralSwapRoute(
       selectedFromToken,
       selectedToToken,
@@ -123,12 +135,39 @@ function App(
     setSwapQuote(quote)
   }, 1000);
 
+  const getFromAmount = (): BigNumber => {
+    const _unit = getFromTokenUnit()
+    if (!amount) {
+      return BigNumber.from(0);
+    }
+    if (amount.indexOf(".") === -1) {
+      // if not decimals, we can just multiply
+      return BigNumber.from(amount).mul(_unit);
+    }
+    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
+    // separate parts
+    const parts = amount.split(".");
+    const integerPart = BigNumber.from(parts[0]).mul(_unit);
+    const decimalPart = BigNumber.from(parts[1] + ("0".repeat(decimals - parts[1].length)))
+    // compose BigNumber
+    return integerPart.add(decimalPart);
+  }
+
   // execute
   const executeSwap = async () => {
     if (swapQuote) {
       await widoSdk.swapCollateral(swapQuote)
     }
   }
+
+  const disabledButton = useMemo(() => {
+    if (!selectedFromToken) return true
+    if (!selectedToToken) return true
+    if (!amount) return true
+    const fromTokenBalance = getFromTokenBalance()
+    const fromAmount = getFromAmount();
+    return fromAmount.gt(fromTokenBalance);
+  }, [amount, assetBalance])
 
   return (
     <div className="page home">
@@ -156,6 +195,7 @@ function App(
           setAmount={setAmount}
           onMaxClick={onMaxClick}
           onSwap={executeSwap}
+          disabledButton={disabledButton}
         />
 
         <p>Market Info</p>
