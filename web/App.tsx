@@ -162,6 +162,10 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   const assetBalance = useMemo(() => {
     const { integer, decimal } = balanceParts();
+    const _decimal = BigNumber.from(decimal);
+    if (_decimal.eq(BigNumber.from(0))) {
+      return integer;
+    }
     // compose visible number
     return integer + "." + decimal.substring(0, 4)
   }, [selectedFromToken, widoSdk])
@@ -184,6 +188,8 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   const onMaxClick = () => {
     const { integer, decimal } = balanceParts();
+    const zero = BigNumber.from(0);
+    if (BigNumber.from(integer).eq(zero) && BigNumber.from(decimal).eq(zero)) return
     // compose string
     const balanceString = integer + "." + decimal
     setAmount(balanceString);
