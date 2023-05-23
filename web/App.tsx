@@ -4,20 +4,22 @@ import { useEffect, useMemo, useState } from "react";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { HomePage } from "./HomePage";
 import { useAsyncEffect } from './lib/useAsyncEffect';
-import { WidoCompoundSdk } from "wido-compound-sdk";
 import { useDebouncedCallback } from 'use-debounce';
-import { CollateralSwapRoute } from 'types/index';
 import { BigNumber } from 'ethers';
-import { Assets, UserAssets } from '../../wido-compound-sdk/src';
+import { WidoCompoundSdk } from "wido-compound-sdk";
+import { CollateralSwapRoute, Deployments, Assets, UserAssets, Deployment } from 'types/index';
 
 interface AppProps {
   rpc?: RPC
   web3: JsonRpcProvider
 }
 
+
 export default ({ rpc, web3 }: AppProps) => {
+  const [markets, setMarkets] = useState<Deployments>([]);
+  const [isSupportedNetwork, setIsSupportedNetwork] = useState<boolean>(false);
+  const [selectedMarket, setSelectedMarket] = useState<Deployment | null>();
   const [account, setAccount] = useState<string | null>(null);
-  const [isSupportedNetwork, setIsSupportedNetwork] = useState<boolean>(true);
   const [supportedCollaterals, setSupportedCollaterals] = useState<Assets>([]);
   const [selectedFromToken, setSelectedFromToken] = useState("");
   const [selectedToToken, setSelectedToToken] = useState("");
@@ -25,7 +27,43 @@ export default ({ rpc, web3 }: AppProps) => {
   const [swapQuote, setSwapQuote] = useState<CollateralSwapRoute | undefined>();
   const [balances, setBalances] = useState<UserAssets>([]);
 
-  // helpers
+  const deployments = WidoCompoundSdk.getDeployments();
+
+  /**
+   * Memo to build the SDK whenever the chain/account/market changes
+   */
+  const widoSdk = useMemo(() => {
+    if (selectedMarket && isSupportedNetwork) {
+      const signer = web3.getSigner().connectUnchecked();
+      return new WidoCompoundSdk(signer, selectedMarket.cometKey)
+    }
+  }, [web3, account, selectedMarket, isSupportedNetwork]);
+
+  /**
+   * Logic callback when selecting `fromToken`
+   * @param selection
+   */
+  const selectFromToken = (selection: string) => {
+    if (selection === selectedToToken) {
+      setSelectedToToken(selectedFromToken)
+    }
+    setSelectedFromToken(selection);
+  }
+
+  /**
+   * Logic callback when selecting `toToken`
+   * @param selection
+   */
+  const selectToToken = (selection: string) => {
+    if (selection === selectedFromToken) {
+      setSelectedFromToken(selectedToToken)
+    }
+    setSelectedToToken(selection);
+  }
+
+  /**
+   * Returns a BigNumber that represents the `amount` string input by the user
+   */
   const getFromAmount = (): BigNumber => {
     const _unit = getFromTokenUnit()
     if (!amount) {
@@ -43,10 +81,18 @@ export default ({ rpc, web3 }: AppProps) => {
     // compose BigNumber
     return integerPart.add(decimalPart);
   }
+
+  /**
+   * Returns a BigNumber that represents a whole unit of the selected `fromToken`
+   */
   const getFromTokenUnit = () => {
     const decimals = getDecimals(supportedCollaterals, selectedFromToken);
     return BigNumber.from("1" + "0".repeat(decimals))
   }
+
+  /**
+   * Returns a BigNumber of the available user's balance of the selected `fromToken`
+   */
   const getFromTokenBalance = (): BigNumber => {
     for (const asset of balances) {
       if (asset.name === selectedFromToken) {
@@ -56,60 +102,42 @@ export default ({ rpc, web3 }: AppProps) => {
     return BigNumber.from(0);
   }
 
-  // set user account
-  useAsyncEffect(async () => {
-    let accounts = await web3.listAccounts();
-    if (accounts.length > 0) {
-      let [account] = accounts;
-      setAccount(account);
+  /**
+   * Debounced quote function
+   */
+  const quote = useDebouncedCallback(async () => {
+    if (widoSdk && isSupportedNetwork) {
+      const fromAmount = getFromAmount();
+      const quote = await widoSdk.getCollateralSwapRoute(
+        selectedFromToken,
+        selectedToToken,
+        fromAmount
+      );
+      setSwapQuote(quote)
     }
-  }, [web3]);
+  }, 1000);
 
-  // initialize SDK
-  const widoSdk = useMemo(() => {
-    const signer = web3.getSigner().connectUnchecked();
-    return new WidoCompoundSdk(signer, "polygon_usdc")
-  }, [web3, account]);
-
-  // load supported collateral
-  useAsyncEffect(async () => {
-    const collaterals = await widoSdk.getSupportedCollaterals();
-    setSupportedCollaterals(collaterals);
-  }, [widoSdk]);
-
-  // load user balances
-  useAsyncEffect(async () => {
-    const balances = await widoSdk.getUserCollaterals();
-    setBalances(balances);
-  }, [widoSdk]);
-
-  // asset selection
-  const selectFromToken = (selection: string) => {
-    if (selection === selectedToToken) {
-      setSelectedToToken(selectedFromToken)
+  /**
+   * Collateral swap execution function
+   */
+  const executeSwap = async () => {
+    if (swapQuote && widoSdk && isSupportedNetwork) {
+      await widoSdk.swapCollateral(swapQuote)
     }
-    setSelectedFromToken(selection);
   }
-  const selectToToken = (selection: string) => {
-    if (selection === selectedFromToken) {
-      setSelectedFromToken(selectedToToken)
-    }
-    setSelectedToToken(selection);
-  }
-  // max button
-  const assetBalance = useMemo(() => {
-    if (!selectedFromToken) return "0"
-    const balance = getFromTokenBalance();
-    const _unit = getFromTokenUnit()
-    // separate parts
-    const integerPart = balance.div(_unit);
-    const decimalPart = balance.sub(integerPart.mul(_unit));
-    // compose visible number
-    return integerPart.toString() + "." + decimalPart.toString().substring(0, 4)
-  }, [selectedFromToken, widoSdk])
 
-  const onMaxClick = () => {
-    if (!selectedFromToken) return "0"
+  /**
+   * Returns the user's balance of `fromToken` in two parts: `integer` and `decimal`
+   *  so it can be formatted and shown as necessary
+   */
+  const balanceParts = (): {
+    integer: string
+    decimal: string
+  } => {
+    if (!selectedFromToken) return {
+      integer: "0",
+      decimal: "0"
+    }
     const decimals = getDecimals(supportedCollaterals, selectedFromToken);
     const balance = getFromTokenBalance();
     const _unit = getFromTokenUnit()
@@ -122,37 +150,24 @@ export default ({ rpc, web3 }: AppProps) => {
       const leftZeros = decimals - decimalPartString.length;
       decimalPartString = "0".repeat(leftZeros) + decimalPartString
     }
-    // compose string
-    const balanceString = integerPart.toString() + "." + decimalPartString
-    setAmount(balanceString);
-  }
-
-  // quote
-  useEffect(() => {
-    if (selectedFromToken && selectedToToken && amount) {
-      quote()
-    }
-  }, [selectedFromToken, selectedToToken, amount])
-
-  const quote = useDebouncedCallback(async () => {
-    const fromAmount = getFromAmount();
-    const quote = await widoSdk.getCollateralSwapRoute(
-      selectedFromToken,
-      selectedToToken,
-      fromAmount
-    );
-    setSwapQuote(quote)
-  }, 1000);
-
-
-  // execute
-  const executeSwap = async () => {
-    if (swapQuote) {
-      await widoSdk.swapCollateral(swapQuote)
+    return {
+      integer: integerPart.toString(),
+      decimal: decimalPartString
     }
   }
 
-  // computed props
+  /**
+   * Memo to keep updated the max balance when the asset changes
+   */
+  const assetBalance = useMemo(() => {
+    const {integer, decimal} = balanceParts();
+    // compose visible number
+    return integer + "." + decimal.substring(0, 4)
+  }, [selectedFromToken, widoSdk])
+
+  /**
+   * Memo to keep the swap button disable state updated when balance/amount changes
+   */
   const disabledButton = useMemo(() => {
     if (!selectedFromToken) return true
     if (!selectedToToken) return true
@@ -160,7 +175,70 @@ export default ({ rpc, web3 }: AppProps) => {
     const fromTokenBalance = getFromTokenBalance()
     const fromAmount = getFromAmount();
     return fromAmount.gt(fromTokenBalance);
-  }, [amount, assetBalance])
+  }, [amount, assetBalance, selectedFromToken, selectedToToken])
+
+  /**
+   * Callback that is executed when the user selects "max amount"
+   * It converts the user's balance into a string to set it as `amount`
+   */
+  const onMaxClick = () => {
+    const {integer, decimal} = balanceParts();
+    // compose string
+    const balanceString = integer + "." + decimal
+    setAmount(balanceString);
+  }
+
+  /**
+   * Async effect to keep markets updated when chain changes
+   */
+  useAsyncEffect(async () => {
+    const currentChainId = await web3.getSigner().getChainId()
+    const supportedMarkets = deployments.filter(d => d.chainId === currentChainId);
+    const isSupported = supportedMarkets.length > 0;
+    setIsSupportedNetwork(isSupported);
+    setMarkets(supportedMarkets)
+    setSelectedMarket(isSupported ? supportedMarkets[0] : null)
+  }, [web3]);
+
+  /**
+   * Async effect to keep account updated
+   */
+  useAsyncEffect(async () => {
+    let accounts = await web3.listAccounts();
+    if (accounts.length > 0) {
+      let [account] = accounts;
+      setAccount(account);
+    }
+  }, [web3]);
+
+  /**
+   * Async effect to keep collaterals updated when the SDK changes
+   */
+  useAsyncEffect(async () => {
+    if (widoSdk && isSupportedNetwork) {
+      const collaterals = await widoSdk.getSupportedCollaterals();
+      setSupportedCollaterals(collaterals);
+    }
+  }, [widoSdk, isSupportedNetwork]);
+
+  /**
+   * Async effect to keep balances updated when the SDK changes
+   */
+  useAsyncEffect(async () => {
+    if (widoSdk && isSupportedNetwork) {
+      const balances = await widoSdk.getUserCollaterals();
+      setBalances(balances);
+    }
+  }, [widoSdk, isSupportedNetwork]);
+
+  /**
+   * Effect to manage quoting logic
+   */
+  useEffect(() => {
+    if (selectedFromToken && selectedToToken && amount) {
+      quote()
+    }
+  }, [selectedFromToken, selectedToToken, amount])
 
   // guard clauses
   if (!isSupportedNetwork) {
