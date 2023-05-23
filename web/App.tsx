@@ -3,7 +3,6 @@ import { RPC } from "@compound-finance/comet-extension";
 import { useEffect, useMemo, useState } from "react";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { HomePage } from "./HomePage";
-import { usePoll } from './lib/usePoll';
 import { useAsyncEffect } from './lib/useAsyncEffect';
 import { WidoCompoundSdk } from "wido-compound-sdk";
 import { useDebouncedCallback } from 'use-debounce';
@@ -16,24 +15,9 @@ interface AppProps {
   web3: JsonRpcProvider
 }
 
-type AppPropsInternal = AppProps & {
-  account: string;
-}
-
-function getDecimals(collaterals: Assets, asset: string): number {
-  for (const collateral of collaterals) {
-    if (collateral.name === asset) {
-      return collateral.decimals
-    }
-  }
-  throw new Error("Asset not found");
-}
-
-function App(
-  {
-    rpc, web3, account
-  }: AppPropsInternal
-) {
+export default ({ rpc, web3 }: AppProps) => {
+  const [account, setAccount] = useState<string | null>(null);
+  const [isSupportedNetwork, setIsSupportedNetwork] = useState<boolean>(true);
   const [supportedCollaterals, setSupportedCollaterals] = useState<Assets>([]);
   const [selectedFromToken, setSelectedFromToken] = useState("");
   const [selectedToToken, setSelectedToToken] = useState("");
@@ -41,11 +25,28 @@ function App(
   const [swapQuote, setSwapQuote] = useState<CollateralSwapRoute | undefined>();
   const [balances, setBalances] = useState<UserAssets>([]);
 
+  // helpers
+  const getFromAmount = (): BigNumber => {
+    const _unit = getFromTokenUnit()
+    if (!amount) {
+      return BigNumber.from(0);
+    }
+    if (amount.indexOf(".") === -1) {
+      // if not decimals, we can just multiply
+      return BigNumber.from(amount).mul(_unit);
+    }
+    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
+    // separate parts
+    const parts = amount.split(".");
+    const integerPart = BigNumber.from(parts[0]).mul(_unit);
+    const decimalPart = BigNumber.from(parts[1] + ("0".repeat(decimals - parts[1].length)))
+    // compose BigNumber
+    return integerPart.add(decimalPart);
+  }
   const getFromTokenUnit = () => {
     const decimals = getDecimals(supportedCollaterals, selectedFromToken);
     return BigNumber.from("1" + "0".repeat(decimals))
   }
-
   const getFromTokenBalance = (): BigNumber => {
     for (const asset of balances) {
       if (asset.name === selectedFromToken) {
@@ -54,6 +55,15 @@ function App(
     }
     return BigNumber.from(0);
   }
+
+  // set user account
+  useAsyncEffect(async () => {
+    let accounts = await web3.listAccounts();
+    if (accounts.length > 0) {
+      let [account] = accounts;
+      setAccount(account);
+    }
+  }, [web3]);
 
   // initialize SDK
   const widoSdk = useMemo(() => {
@@ -73,6 +83,19 @@ function App(
     setBalances(balances);
   }, [widoSdk]);
 
+  // asset selection
+  const selectFromToken = (selection: string) => {
+    if (selection === selectedToToken) {
+      setSelectedToToken(selectedFromToken)
+    }
+    setSelectedFromToken(selection);
+  }
+  const selectToToken = (selection: string) => {
+    if (selection === selectedFromToken) {
+      setSelectedFromToken(selectedToToken)
+    }
+    setSelectedToToken(selection);
+  }
   // max button
   const assetBalance = useMemo(() => {
     if (!selectedFromToken) return "0"
@@ -104,20 +127,6 @@ function App(
     setAmount(balanceString);
   }
 
-  // asset selection
-  const selectFromToken = (selection: string) => {
-    if (selection === selectedToToken) {
-      setSelectedToToken(selectedFromToken)
-    }
-    setSelectedFromToken(selection);
-  }
-  const selectToToken = (selection: string) => {
-    if (selection === selectedFromToken) {
-      setSelectedFromToken(selectedToToken)
-    }
-    setSelectedToToken(selection);
-  }
-
   // quote
   useEffect(() => {
     if (selectedFromToken && selectedToToken && amount) {
@@ -135,23 +144,6 @@ function App(
     setSwapQuote(quote)
   }, 1000);
 
-  const getFromAmount = (): BigNumber => {
-    const _unit = getFromTokenUnit()
-    if (!amount) {
-      return BigNumber.from(0);
-    }
-    if (amount.indexOf(".") === -1) {
-      // if not decimals, we can just multiply
-      return BigNumber.from(amount).mul(_unit);
-    }
-    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
-    // separate parts
-    const parts = amount.split(".");
-    const integerPart = BigNumber.from(parts[0]).mul(_unit);
-    const decimalPart = BigNumber.from(parts[1] + ("0".repeat(decimals - parts[1].length)))
-    // compose BigNumber
-    return integerPart.add(decimalPart);
-  }
 
   // execute
   const executeSwap = async () => {
@@ -160,6 +152,7 @@ function App(
     }
   }
 
+  // computed props
   const disabledButton = useMemo(() => {
     if (!selectedFromToken) return true
     if (!selectedToToken) return true
@@ -168,6 +161,14 @@ function App(
     const fromAmount = getFromAmount();
     return fromAmount.gt(fromTokenBalance);
   }, [amount, assetBalance])
+
+  // guard clauses
+  if (!isSupportedNetwork) {
+    return <div>Unsupported network...</div>;
+  }
+  if (!account) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="page home">
@@ -204,35 +205,14 @@ function App(
         <p>marketAddress: </p>
       </div>
     </div>
-  );
-}
-
-export default ({ rpc, web3 }: AppProps) => {
-  let timer = usePoll(10000);
-  const [account, setAccount] = useState<string | null>(null);
-  const [isSupportedNetwork, setIsSupportedNetwork] = useState<boolean>(true);
-
-  useAsyncEffect(async () => {
-    let accounts = await web3.listAccounts();
-    if (accounts.length > 0) {
-      let [account] = accounts;
-      setAccount(account);
-    }
-  }, [web3, timer]);
-
-  if (!isSupportedNetwork) {
-    return <div>Unsupported network...</div>;
-  }
-
-  if (!account) {
-    return <div>Loading...</div>;
-  }
-
-  return (
-    <App
-      rpc={rpc}
-      web3={web3}
-      account={account}
-    />
-  );
+  )
 };
+
+function getDecimals(collaterals: Assets, asset: string): number {
+  for (const collateral of collaterals) {
+    if (collateral.name === asset) {
+      return collateral.decimals
+    }
+  }
+  throw new Error("Asset not found");
+}
