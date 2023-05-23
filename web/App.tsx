@@ -15,6 +15,7 @@ interface AppProps {
   web3: JsonRpcProvider
 }
 
+const ZERO = BigNumber.from(0);
 
 export default ({ rpc, web3 }: AppProps) => {
   const [markets, setMarkets] = useState<Deployments>([]);
@@ -67,29 +68,21 @@ export default ({ rpc, web3 }: AppProps) => {
    * Returns a BigNumber that represents the `amount` string input by the user
    */
   const getFromAmount = (): BigNumber => {
-    const _unit = getFromTokenUnit()
     if (!amount) {
-      return BigNumber.from(0);
+      return ZERO;
     }
+    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
+    const _unit = getTokenUnit(decimals)
     if (amount.indexOf(".") === -1) {
       // if not decimals, we can just multiply
       return BigNumber.from(amount).mul(_unit);
     }
-    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
     // separate parts
     const parts = amount.split(".");
     const integerPart = BigNumber.from(parts[0]).mul(_unit);
     const decimalPart = BigNumber.from(parts[1] + ("0".repeat(decimals - parts[1].length)))
     // compose BigNumber
     return integerPart.add(decimalPart);
-  }
-
-  /**
-   * Returns a BigNumber that represents a whole unit of the selected `fromToken`
-   */
-  const getFromTokenUnit = () => {
-    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
-    return BigNumber.from("1" + "0".repeat(decimals))
   }
 
   /**
@@ -101,7 +94,7 @@ export default ({ rpc, web3 }: AppProps) => {
         return asset.balance
       }
     }
-    return BigNumber.from(0);
+    return ZERO;
   }
 
   /**
@@ -114,46 +107,15 @@ export default ({ rpc, web3 }: AppProps) => {
   }
 
   /**
-   * Returns the user's balance of `fromToken` in two parts: `integer` and `decimal`
-   *  so it can be formatted and shown as necessary
-   */
-  const balanceParts = (): {
-    integer: string
-    decimal: string
-  } => {
-    if (!selectedFromToken) return {
-      integer: "0",
-      decimal: "0"
-    }
-    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
-    const balance = getFromTokenBalance();
-    const _unit = getFromTokenUnit()
-    // separate parts
-    const integerPart = balance.div(_unit);
-    const decimalPart = balance.sub(integerPart.mul(_unit));
-    let decimalPartString = decimalPart.toString()
-    // check if extra zeros required on decimal part
-    if (decimalPartString.length < decimals) {
-      const leftZeros = decimals - decimalPartString.length;
-      decimalPartString = "0".repeat(leftZeros) + decimalPartString
-    }
-    return {
-      integer: integerPart.toString(),
-      decimal: decimalPartString
-    }
-  }
-
-  /**
    * Memo to keep updated the max balance when the asset changes
    */
   const assetBalance = useMemo(() => {
-    const { integer, decimal } = balanceParts();
-    const _decimal = BigNumber.from(decimal);
-    if (_decimal.eq(BigNumber.from(0))) {
-      return integer;
+    if (!selectedFromToken) {
+      return "0";
     }
-    // compose visible number
-    return integer + "." + decimal.substring(0, 4)
+    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
+    const balance = getFromTokenBalance();
+    return formatAmount(balance, decimals);
   }, [selectedFromToken, widoSdk])
 
   /**
@@ -174,10 +136,12 @@ export default ({ rpc, web3 }: AppProps) => {
    * It converts the user's balance into a string to set it as `amount`
    */
   const onMaxClick = () => {
-    const { integer, decimal } = balanceParts();
-    const zero = BigNumber.from(0);
-    if (BigNumber.from(integer).eq(zero) && BigNumber.from(decimal).eq(zero)) return
-    // compose string
+    if (!selectedFromToken) return;
+    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
+    const balance = getFromTokenBalance();
+    if (balance.eq(ZERO)) return;
+    const { integer, decimal } = getAmountParts(balance, decimals);
+    // compose full string
     const balanceString = integer + "." + decimal
     setAmount(balanceString);
   }
@@ -253,6 +217,26 @@ export default ({ rpc, web3 }: AppProps) => {
     }
   }, 1000);
 
+  /**
+   * Computes formatted amount to be shown for the quote's expected amounts
+   * @param quote
+   */
+  const {expectedAmount, minimumAmount} = useMemo(() => {
+    if(!swapQuote){
+      return {
+        expectedAmount: "",
+        minimumAmount: "",
+      }
+    }
+    const decimals = getDecimals(supportedCollaterals, selectedToToken);
+    const expectedAmount = formatAmount(BigNumber.from(swapQuote.toCollateralAmount), decimals, 6);
+    const minimumAmount = formatAmount(BigNumber.from(swapQuote.toCollateralMinAmount), decimals, 6);
+    return {
+      expectedAmount,
+      minimumAmount,
+    }
+  }, [swapQuote])
+
   // guard clauses
   if (!isSupportedNetwork) {
     return <div>Unsupported network...</div>;
@@ -293,7 +277,8 @@ export default ({ rpc, web3 }: AppProps) => {
           onMaxClick={onMaxClick}
           onSwap={executeSwap}
           disabledButton={disabledButton}
-          swapQuote={swapQuote}
+          expectedAmount={expectedAmount}
+          minimumAmount={minimumAmount}
           isLoading={isLoading}
         />
 
@@ -306,6 +291,11 @@ export default ({ rpc, web3 }: AppProps) => {
   )
 };
 
+/**
+ * Returns the number of decimals of a given asset
+ * @param collaterals
+ * @param asset
+ */
 function getDecimals(collaterals: Assets, asset: string): number {
   for (const collateral of collaterals) {
     if (collateral.name === asset) {
@@ -313,4 +303,48 @@ function getDecimals(collaterals: Assets, asset: string): number {
     }
   }
   throw new Error("Asset not found");
+}
+
+/**
+ * Returns a BigNumber that represents the whole unit of a token of given `decimals`
+ */
+const getTokenUnit = (decimals: number) => {
+  return BigNumber.from("1" + "0".repeat(decimals))
+}
+
+/**
+ * Formats an `amount` of `decimals` precision into a string for the UI
+ */
+const formatAmount = (amount: BigNumber, decimals: number, precision = 4): string => {
+  const { integer, decimal } = getAmountParts(amount, decimals);
+  const _decimal = BigNumber.from(decimal);
+  if (_decimal.eq(ZERO)) {
+    return integer;
+  }
+  // compose visible number
+  return integer + "." + decimal.substring(0, precision)
+}
+
+/**
+ * Returns the given amount in split in two parts: `integer` and `decimal`
+ *  so it can be formatted and shown as necessary
+ */
+function getAmountParts(amount: BigNumber, decimals: number): {
+  integer: string
+  decimal: string
+} {
+  const _unit = BigNumber.from("1" + "0".repeat(decimals))
+  // separate parts
+  const integerPart = amount.div(_unit);
+  const decimalPart = amount.sub(integerPart.mul(_unit));
+  let decimalPartString = decimalPart.toString()
+  // check if extra zeros required on decimal part
+  if (decimalPartString.length < decimals) {
+    const leftZeros = decimals - decimalPartString.length;
+    decimalPartString = "0".repeat(leftZeros) + decimalPartString
+  }
+  return {
+    integer: integerPart.toString(),
+    decimal: decimalPartString
+  }
 }
