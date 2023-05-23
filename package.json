@@ -1,17 +1,13 @@
 {
-  "name": "comet-extension-template",
+  "name": "collaterall-swap-extension",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "web:dev": "vite",
-    "web:build": "tsc && vite build",
-    "web:deploy": "tsc && vite build && node script/ipfs.js",
-    "web:preview": "vite preview",
-    "web:test": "jest",
-    "forge:build": "forge build",
-    "forge:test": "script/test.sh",
-    "forge:lint": "solhint '{src,script,test}/**/*.sol'",
-    "forge:playground": "script/playground.sh"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "deploy": "tsc && vite build && node script/ipfs.js",
+    "preview": "vite preview",
+    "test": "jest"
   },
   "dependencies": {
     "@compound-finance/comet-extension": "^0.0.15",
