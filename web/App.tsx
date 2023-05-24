@@ -2,12 +2,19 @@ import "../styles/main.scss";
 import { RPC } from "@compound-finance/comet-extension";
 import { useEffect, useMemo, useState } from "react";
 import { JsonRpcProvider } from "@ethersproject/providers";
+import {
+  WidoCompoundSdk,
+  CollateralSwapRoute,
+  Deployments,
+  Assets,
+  UserAssets,
+  Deployment,
+  Position
+} from "@widolabs/collateral-swap-sdk";
 import { HomePage } from "./HomePage";
 import { useAsyncEffect } from './lib/useAsyncEffect';
 import { useDebouncedCallback } from 'use-debounce';
 import { BigNumber } from 'ethers';
-import { WidoCompoundSdk } from "wido-compound-sdk";
-import { CollateralSwapRoute, Deployments, Assets, UserAssets, Deployment, Position } from 'types/index';
 import { MarketSelector } from './components/MarketSelector';
 
 interface AppProps {
