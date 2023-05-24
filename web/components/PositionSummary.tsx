@@ -1,11 +1,19 @@
 import React from "react";
 import { Label } from './Label';
 import { LabelValue } from './LabelValue';
+import { Position } from 'types/index';
 
 interface Props {
+  currentPosition: Position | undefined
+  predictedPosition: Position | undefined
 }
 
-export function PositionSummary({}: Props) {
+export function PositionSummary({ currentPosition, predictedPosition }: Props) {
+  const format = (number: number): string => {
+    if(!number) return ""
+    return number.toFixed(4)
+  }
+
   return (
     <table className="pos__summary">
       <tbody>
@@ -25,10 +33,14 @@ export function PositionSummary({}: Props) {
           <Label text="Collateral Value"/>
         </td>
         <td>
-          <LabelValue text="3,591.77"/>
+          {
+            currentPosition ? <LabelValue text={format(currentPosition.collateralValue)}/> : null
+          }
         </td>
         <td>
-          <LabelValue text="$3,591.77"/>
+          {
+            predictedPosition ? <LabelValue text={format(predictedPosition.collateralValue)}/> : null
+          }
         </td>
       </tr>
       <tr>
@@ -36,10 +48,14 @@ export function PositionSummary({}: Props) {
           <Label text="Liquidation Point"/>
         </td>
         <td>
-          <LabelValue text="$1,185.28"/>
+          {
+            currentPosition ? <LabelValue text={format(currentPosition.liquidationPoint)}/> : null
+          }
         </td>
         <td>
-          <LabelValue text="$1,185.28"/>
+          {
+            predictedPosition ? <LabelValue text={format(predictedPosition.liquidationPoint)}/> : null
+          }
         </td>
       </tr>
       <tr>
@@ -47,10 +63,14 @@ export function PositionSummary({}: Props) {
           <Label text="Borrow Capacity"/>
         </td>
         <td>
-          <LabelValue text="$2,945.25"/>
+          {
+            currentPosition ? <LabelValue text={format(currentPosition.borrowCapacity)}/> : null
+          }
         </td>
         <td>
-          <LabelValue text="$2,945.25"/>
+          {
+            predictedPosition ? <LabelValue text={format(predictedPosition.borrowCapacity)}/> : null
+          }
         </td>
       </tr>
       <tr>
@@ -58,10 +78,14 @@ export function PositionSummary({}: Props) {
           <Label text="Available to Borrow"/>
         </td>
         <td>
-          <LabelValue text="$1,945.17"/>
+          {
+            currentPosition ? <LabelValue text={format(currentPosition.borrowAvailable)}/> : null
+          }
         </td>
         <td>
-          <LabelValue text="$1,945.17"/>
+          {
+            predictedPosition ? <LabelValue text={format(predictedPosition.borrowAvailable)}/> : null
+          }
         </td>
       </tr>
       </tbody>

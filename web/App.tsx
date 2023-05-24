@@ -7,7 +7,7 @@ import { useAsyncEffect } from './lib/useAsyncEffect';
 import { useDebouncedCallback } from 'use-debounce';
 import { BigNumber } from 'ethers';
 import { WidoCompoundSdk } from "wido-compound-sdk";
-import { CollateralSwapRoute, Deployments, Assets, UserAssets, Deployment } from 'types/index';
+import { CollateralSwapRoute, Deployments, Assets, UserAssets, Deployment, Position } from 'types/index';
 import { MarketSelector } from './components/MarketSelector';
 
 interface AppProps {
@@ -29,6 +29,8 @@ export default ({ rpc, web3 }: AppProps) => {
   const [swapQuote, setSwapQuote] = useState<CollateralSwapRoute | undefined>();
   const [balances, setBalances] = useState<UserAssets>([]);
   const [isLoading, setLoading] = useState<boolean>(false);
+  const [currentPosition, setCurrentPosition] = useState<Position>();
+  const [predictedPosition, setPredictedPosition] = useState<Position>();
 
   const deployments = WidoCompoundSdk.getDeployments();
 
@@ -195,6 +197,7 @@ export default ({ rpc, web3 }: AppProps) => {
   useEffect(() => {
     if (selectedFromToken && selectedToToken && amount) {
       setLoading(true);
+      setPredictedPosition(undefined);
       quote()
     }
   }, [selectedFromToken, selectedToToken, amount])
@@ -214,15 +217,28 @@ export default ({ rpc, web3 }: AppProps) => {
         return response;
       })
       setSwapQuote(quote)
+      // Compute predicted position
+      const predictedPosition = await widoSdk.getUserPredictedPosition(quote);
+      setPredictedPosition(predictedPosition);
     }
   }, 1000);
+
+  /**
+   * Fetch current position when `fromToken` is selected
+   */
+  useAsyncEffect(async () => {
+    if (widoSdk && selectedFromToken) {
+      const currentPosition = await widoSdk.getUserCurrentPosition();
+      setCurrentPosition(currentPosition);
+    }
+  }, [selectedFromToken, widoSdk]);
 
   /**
    * Computes formatted amount to be shown for the quote's expected amounts
    * @param quote
    */
-  const {expectedAmount, minimumAmount} = useMemo(() => {
-    if(!swapQuote){
+  const { expectedAmount, minimumAmount } = useMemo(() => {
+    if (!swapQuote) {
       return {
         expectedAmount: "",
         minimumAmount: "",
@@ -280,6 +296,8 @@ export default ({ rpc, web3 }: AppProps) => {
           expectedAmount={expectedAmount}
           minimumAmount={minimumAmount}
           isLoading={isLoading}
+          currentPosition={currentPosition}
+          predictedPosition={predictedPosition}
         />
 
         <p>Market Info</p>

@@ -4,6 +4,7 @@ import { ArrowDown } from "./Icons";
 import { Label } from './components/Label';
 import { PositionSummary } from './components/PositionSummary';
 import { QuoteExpectedAmounts } from './components/QuoteExpectedAmounts';
+import { Position } from 'types/index';
 
 interface HomePageProps {
   collaterals: string[]
@@ -20,6 +21,8 @@ interface HomePageProps {
   expectedAmount: string
   minimumAmount: string
   isLoading: boolean
+  currentPosition: Position | undefined
+  predictedPosition: Position | undefined
 }
 
 export function HomePage(
@@ -38,6 +41,8 @@ export function HomePage(
     expectedAmount,
     minimumAmount,
     isLoading,
+    currentPosition,
+    predictedPosition,
   }: HomePageProps
 ) {
   return (
@@ -95,7 +100,10 @@ export function HomePage(
               Swap
             </button>
           </div>
-          <PositionSummary/>
+          <PositionSummary
+            currentPosition={currentPosition}
+            predictedPosition={predictedPosition}
+          />
         </div>
       </div>
     </div>
