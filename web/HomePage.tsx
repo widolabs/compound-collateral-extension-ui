@@ -1,10 +1,10 @@
 import React from "react";
 import { AssetSelector } from "./components/AssetSelector";
 import { ArrowDown } from "./Icons";
-import { Label } from './components/Label';
-import { PositionSummary } from './components/PositionSummary';
-import { QuoteExpectedAmounts } from './components/QuoteExpectedAmounts';
-import { Position } from 'types/index';
+import { Label } from "./components/Label";
+import { PositionSummary } from "./components/PositionSummary";
+import { QuoteExpectedAmounts } from "./components/QuoteExpectedAmounts";
+import { Position } from "@widolabs/collateral-swap-sdk";
 
 interface HomePageProps {
   collaterals: string[]

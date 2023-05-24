@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { CaretDown } from "../Icons/CaretDown";
 import OutsideClickHandler from "react-outside-click-handler";
-import { Deployment } from 'types/index';
+import { Deployment } from '@widolabs/collateral-swap-sdk';
 
 type Props = {
   value: Deployment;

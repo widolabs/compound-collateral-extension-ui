@@ -1,7 +1,7 @@
 import React from "react";
-import { Label } from './Label';
-import { LabelValue } from './LabelValue';
-import { Position } from 'types/index';
+import { Label } from "./Label";
+import { LabelValue } from "./LabelValue";
+import { Position } from "@widolabs/collateral-swap-sdk";
 
 interface Props {
   currentPosition: Position | undefined
