@@ -6,9 +6,10 @@ interface Props {
   expectedAmount: string
   minimumAmount: string
   isLoading: boolean
+  tokenSymbol: string
 }
 
-export function QuoteExpectedAmounts({ expectedAmount, minimumAmount, isLoading }: Props) {
+export function QuoteExpectedAmounts({ expectedAmount, minimumAmount, isLoading, tokenSymbol }: Props) {
   if (isLoading) {
     return <div>Loading...</div>
   }
@@ -17,11 +18,11 @@ export function QuoteExpectedAmounts({ expectedAmount, minimumAmount, isLoading 
     <>
       <div className="panel__row">
         <Label text="Expected amount"/>
-        <LabelValue text={expectedAmount}/>
+        <LabelValue text={expectedAmount + " " + tokenSymbol}/>
       </div>
       <div className="panel__row">
         <Label text="Guaranteed amount"/>
-        <LabelValue text={minimumAmount}/>
+        <LabelValue text={minimumAmount + " " + tokenSymbol}/>
       </div>
     </>
     : null

@@ -113,6 +113,7 @@ export function HomePage(
             isLoading={isLoading}
             expectedAmount={expectedAmount}
             minimumAmount={minimumAmount}
+            tokenSymbol={toToken}
           />
           <div className="panel__column form_button">
             <button className="button button--large button--supply" onClick={onSwap} disabled={disabledButton}>
