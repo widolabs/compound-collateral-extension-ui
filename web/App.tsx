@@ -33,8 +33,8 @@ export default ({ rpc, web3 }: AppProps) => {
   const [swapQuote, setSwapQuote] = useState<CollateralSwapRoute | undefined>();
   const [userAssets, setUserAssets] = useState<UserAssets>([]);
   const [isLoading, setLoading] = useState<boolean>(false);
-  const [currentPosition, setCurrentPosition] = useState<Position>();
-  const [predictedPosition, setPredictedPosition] = useState<Position>();
+  const [currentPosition, setCurrentPosition] = useState<Position | undefined>();
+  const [predictedPosition, setPredictedPosition] = useState<Position | undefined>();
 
   const deployments = WidoCompoundSdk.getDeployments();
 
@@ -57,6 +57,9 @@ export default ({ rpc, web3 }: AppProps) => {
       setSelectedToToken(selectedFromToken)
     }
     setSelectedFromToken(selection);
+    setAmount("");
+    setPredictedPosition(undefined);
+    setSwapQuote(undefined);
   }
 
   /**
