@@ -64,7 +64,7 @@ export function HomePage(
             />
           </div>
           <div className="panel__column">
-            <Label text="Amount"/>
+            <Label text="Amount" color="4"/>
             <div className="panel__row" style={{ padding: 0 }}>
               <input
                 className="action-input-view__input"
