@@ -60,6 +60,7 @@ export function HomePage(
               value={fromToken}
               options={collaterals}
               onChange={setFromToken}
+              showBalance={true}
             />
           </div>
           <div className="panel__column">
@@ -90,6 +91,7 @@ export function HomePage(
               value={toToken}
               options={collaterals}
               onChange={setToToken}
+              showBalance={false}
             />
           </div>
           <QuoteExpectedAmounts

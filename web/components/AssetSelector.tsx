@@ -2,17 +2,20 @@ import React, { useState } from "react";
 import { CaretDown } from "../Icons/CaretDown";
 import OutsideClickHandler from "react-outside-click-handler";
 import { UserAssets } from '@widolabs/collateral-swap-sdk';
+import { formatAmount } from '../lib/utils';
 
 type AssetSelectorProps = {
-  value: string;
-  options: UserAssets;
-  onChange: (value: string) => void;
+  value: string
+  options: UserAssets
+  onChange: (value: string) => void
+  showBalance: boolean
 };
 
 export function AssetSelector({
   value,
   options,
   onChange,
+  showBalance,
 }: AssetSelectorProps) {
   const [open, setOpen] = useState(false);
 
@@ -47,6 +50,15 @@ export function AssetSelector({
                     <div className="market-selector__option__info">
                       <span className="label text-color--1 L1">{option.name}</span>
                     </div>
+                    {
+                      showBalance
+                        ?
+                        <div className="market-selector__balance">
+                          {formatAmount(option.balance, option.decimals, 4)}
+                        </div>
+                        :
+                        null
+                    }
                   </div>
                 ))
               }

@@ -38,4 +38,10 @@
       background: var(--ui--foreground--2);
     }
   }
+
+  &__balance {
+    position: absolute;
+    right: 0;
+    margin-right: 20px;
+  }
 }
