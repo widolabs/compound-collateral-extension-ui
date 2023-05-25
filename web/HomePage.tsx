@@ -65,22 +65,37 @@ export function HomePage(
           </div>
           <div className="panel__column">
             <Label text="Amount"/>
-            <input
-              className="action-input-view__input"
-              placeholder="0"
-              autoComplete="off"
-              value={amount}
-              inputMode="decimal"
-              type="number"
-              autoCorrect="off"
-              spellCheck="false"
-              onChange={(event) => {
-                setAmount(event.target.value);
-              }}
-            />
-            <label className="label text-color--2" style={{ cursor: "pointer" }} onClick={onMaxClick}>
-              Balance: {assetBalance}
-            </label>
+            <div className="panel__row" style={{ padding: 0 }}>
+              <input
+                className="action-input-view__input"
+                placeholder="0"
+                autoComplete="off"
+                value={amount}
+                inputMode="decimal"
+                type="number"
+                autoCorrect="off"
+                spellCheck="false"
+                onChange={(event) => {
+                  setAmount(event.target.value);
+                }}
+              />
+              {
+                fromToken
+                  ?
+                  <button onClick={onMaxClick}>Max</button>
+                  :
+                  null
+              }
+            </div>
+            {
+              fromToken
+                ?
+                <label className="label text-color--2">
+                  <span className={`asset asset--icon asset--${fromToken}`}></span> {assetBalance} Available
+                </label>
+                :
+                null
+            }
           </div>
           <div className="panel__row panel__row__center">
             <ArrowDown className="svg--icon--2"/>
