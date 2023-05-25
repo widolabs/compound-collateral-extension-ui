@@ -297,11 +297,6 @@ export default ({ rpc, web3 }: AppProps) => {
           predictedPosition={predictedPosition}
           baseTokenSymbol={selectedMarket?.asset}
         />
-
-        <p>Market Info</p>
-        <p>chainId: </p>
-        <p>baseAssetSymbol: </p>
-        <p>marketAddress: </p>
       </div>
     </div>
   )
