@@ -26,7 +26,7 @@ export function PositionSummary({ currentPosition, predictedPosition, baseTokenS
           <Label text="Current"/>
         </td>
         <td>
-          <Label text="Target"/>
+          <Label text="Predicted" title={"Predicted position is computed using Expected amount"}/>
         </td>
       </tr>
       <tr>
