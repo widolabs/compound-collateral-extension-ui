@@ -6,7 +6,6 @@ import {
   WidoCompoundSdk,
   CollateralSwapRoute,
   Deployments,
-  Assets,
   UserAssets,
   Deployment,
   Position
@@ -29,12 +28,11 @@ export default ({ rpc, web3 }: AppProps) => {
   const [isSupportedNetwork, setIsSupportedNetwork] = useState<boolean>(false);
   const [selectedMarket, setSelectedMarket] = useState<Deployment | null>();
   const [account, setAccount] = useState<string | null>(null);
-  const [supportedCollaterals, setSupportedCollaterals] = useState<Assets>([]);
   const [selectedFromToken, setSelectedFromToken] = useState("");
   const [selectedToToken, setSelectedToToken] = useState("");
   const [amount, setAmount] = useState("");
   const [swapQuote, setSwapQuote] = useState<CollateralSwapRoute | undefined>();
-  const [balances, setBalances] = useState<UserAssets>([]);
+  const [userAssets, setUserAssets] = useState<UserAssets>([]);
   const [isLoading, setLoading] = useState<boolean>(false);
   const [currentPosition, setCurrentPosition] = useState<Position>();
   const [predictedPosition, setPredictedPosition] = useState<Position>();
@@ -80,7 +78,7 @@ export default ({ rpc, web3 }: AppProps) => {
     if (!amount) {
       return ZERO;
     }
-    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
+    const decimals = getDecimals(userAssets, selectedFromToken);
     const _unit = getTokenUnit(decimals)
     if (amount.indexOf(".") === -1) {
       // if not decimals, we can just multiply
@@ -98,7 +96,7 @@ export default ({ rpc, web3 }: AppProps) => {
    * Returns a BigNumber of the available user's balance of the selected `fromToken`
    */
   const getFromTokenBalance = (): BigNumber => {
-    for (const asset of balances) {
+    for (const asset of userAssets) {
       if (asset.name === selectedFromToken) {
         return asset.balance
       }
@@ -122,7 +120,7 @@ export default ({ rpc, web3 }: AppProps) => {
     if (!selectedFromToken) {
       return "0";
     }
-    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
+    const decimals = getDecimals(userAssets, selectedFromToken);
     const balance = getFromTokenBalance();
     return formatAmount(balance, decimals);
   }, [selectedFromToken, widoSdk])
@@ -146,7 +144,7 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   const onMaxClick = () => {
     if (!selectedFromToken) return;
-    const decimals = getDecimals(supportedCollaterals, selectedFromToken);
+    const decimals = getDecimals(userAssets, selectedFromToken);
     const balance = getFromTokenBalance();
     if (balance.eq(ZERO)) return;
     const { integer, decimal } = getAmountParts(balance, decimals);
@@ -179,22 +177,12 @@ export default ({ rpc, web3 }: AppProps) => {
   }, [web3]);
 
   /**
-   * Async effect to keep collaterals updated when the SDK changes
-   */
-  useAsyncEffect(async () => {
-    if (widoSdk && isSupportedNetwork) {
-      const collaterals = await widoSdk.getSupportedCollaterals();
-      setSupportedCollaterals(collaterals);
-    }
-  }, [widoSdk, isSupportedNetwork]);
-
-  /**
    * Async effect to keep balances updated when the SDK changes
    */
   useAsyncEffect(async () => {
     if (widoSdk && isSupportedNetwork) {
-      const balances = await widoSdk.getUserCollaterals();
-      setBalances(balances);
+      const assets = await widoSdk.getUserCollaterals();
+      setUserAssets(assets);
     }
   }, [widoSdk, isSupportedNetwork]);
 
@@ -251,7 +239,7 @@ export default ({ rpc, web3 }: AppProps) => {
         minimumAmount: "",
       }
     }
-    const decimals = getDecimals(supportedCollaterals, selectedToToken);
+    const decimals = getDecimals(userAssets, selectedToToken);
     const expectedAmount = formatAmount(BigNumber.from(swapQuote.toCollateralAmount), decimals, 6);
     const minimumAmount = formatAmount(BigNumber.from(swapQuote.toCollateralMinAmount), decimals, 6);
     return {
@@ -289,7 +277,7 @@ export default ({ rpc, web3 }: AppProps) => {
         </div>
 
         <HomePage
-          collaterals={supportedCollaterals.map(c => c.name)}
+          collaterals={userAssets}
           fromToken={selectedFromToken}
           toToken={selectedToToken}
           amount={amount}
@@ -322,7 +310,7 @@ export default ({ rpc, web3 }: AppProps) => {
  * @param collaterals
  * @param asset
  */
-function getDecimals(collaterals: Assets, asset: string): number {
+function getDecimals(collaterals: UserAssets, asset: string): number {
   for (const collateral of collaterals) {
     if (collateral.name === asset) {
       return collateral.decimals

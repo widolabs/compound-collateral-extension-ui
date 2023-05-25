@@ -4,10 +4,10 @@ import { ArrowDown } from "./Icons";
 import { Label } from "./components/Label";
 import { PositionSummary } from "./components/PositionSummary";
 import { QuoteExpectedAmounts } from "./components/QuoteExpectedAmounts";
-import { Position } from "@widolabs/collateral-swap-sdk";
+import { Position, UserAssets } from "@widolabs/collateral-swap-sdk";
 
 interface HomePageProps {
-  collaterals: string[]
+  collaterals: UserAssets
   fromToken: string
   toToken: string
   amount: string
