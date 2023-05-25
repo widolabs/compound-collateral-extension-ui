@@ -305,6 +305,7 @@ export default ({ rpc, web3 }: AppProps) => {
           isLoading={isLoading}
           currentPosition={currentPosition}
           predictedPosition={predictedPosition}
+          baseTokenSymbol={selectedMarket?.asset}
         />
 
         <p>Market Info</p>

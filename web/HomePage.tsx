@@ -23,6 +23,7 @@ interface HomePageProps {
   isLoading: boolean
   currentPosition: Position | undefined
   predictedPosition: Position | undefined
+  baseTokenSymbol: string | undefined
 }
 
 export function HomePage(
@@ -43,6 +44,7 @@ export function HomePage(
     isLoading,
     currentPosition,
     predictedPosition,
+    baseTokenSymbol,
   }: HomePageProps
 ) {
   return (
@@ -103,6 +105,7 @@ export function HomePage(
           <PositionSummary
             currentPosition={currentPosition}
             predictedPosition={predictedPosition}
+            baseTokenSymbol={baseTokenSymbol}
           />
         </div>
       </div>

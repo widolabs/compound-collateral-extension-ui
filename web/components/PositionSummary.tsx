@@ -6,12 +6,13 @@ import { Position } from "@widolabs/collateral-swap-sdk";
 interface Props {
   currentPosition: Position | undefined
   predictedPosition: Position | undefined
+  baseTokenSymbol: string | undefined
 }
 
-export function PositionSummary({ currentPosition, predictedPosition }: Props) {
+export function PositionSummary({ currentPosition, predictedPosition, baseTokenSymbol }: Props) {
   const format = (number: number): string => {
     if(!number) return ""
-    return number.toFixed(4)
+    return number.toFixed(4) + " " + baseTokenSymbol?.toUpperCase()
   }
 
   return (
