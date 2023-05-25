@@ -14,7 +14,6 @@ import { HomePage } from "./HomePage";
 import { useAsyncEffect } from './lib/useAsyncEffect';
 import { useDebouncedCallback } from 'use-debounce';
 import { BigNumber } from 'ethers';
-import { MarketSelector } from './components/MarketSelector';
 import { formatAmount, getAmountParts, getDecimals, getTokenUnit, ZERO } from './lib/utils';
 
 interface AppProps {
@@ -25,7 +24,7 @@ interface AppProps {
 export default ({ rpc, web3 }: AppProps) => {
   const [markets, setMarkets] = useState<Deployments>([]);
   const [isSupportedNetwork, setIsSupportedNetwork] = useState<boolean>(false);
-  const [selectedMarket, setSelectedMarket] = useState<Deployment | null>();
+  const [selectedMarket, setSelectedMarket] = useState<Deployment | undefined>();
   const [account, setAccount] = useState<string | null>(null);
   const [selectedFromToken, setSelectedFromToken] = useState("");
   const [selectedToToken, setSelectedToToken] = useState("");
@@ -164,7 +163,7 @@ export default ({ rpc, web3 }: AppProps) => {
     const isSupported = supportedMarkets.length > 0;
     setIsSupportedNetwork(isSupported);
     setMarkets(supportedMarkets)
-    setSelectedMarket(isSupported ? supportedMarkets[0] : null)
+    setSelectedMarket(isSupported ? supportedMarkets[0] : undefined)
   }, [web3]);
 
   /**
@@ -265,20 +264,12 @@ export default ({ rpc, web3 }: AppProps) => {
           <h1 className="L0 heading heading--emphasized">
             Wido Collateral Swaps
           </h1>
-          {
-            selectedMarket
-              ? <MarketSelector
-                value={selectedMarket}
-                options={markets}
-                onChange={(selection) => {
-                  setSelectedMarket(selection)
-                }}
-              />
-              : null
-          }
         </div>
 
         <HomePage
+          selectedMarket={selectedMarket}
+          markets={markets}
+          onSelectMarket={setSelectedMarket}
           collaterals={userAssets}
           fromToken={selectedFromToken}
           toToken={selectedToToken}

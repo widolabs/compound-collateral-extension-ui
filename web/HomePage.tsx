@@ -4,7 +4,8 @@ import { ArrowDown } from "./Icons";
 import { Label } from "./components/Label";
 import { PositionSummary } from "./components/PositionSummary";
 import { QuoteExpectedAmounts } from "./components/QuoteExpectedAmounts";
-import { Position, UserAssets } from "@widolabs/collateral-swap-sdk";
+import { Deployment, Deployments, Position, UserAssets } from "@widolabs/collateral-swap-sdk";
+import { MarketSelector } from './components/MarketSelector';
 
 interface HomePageProps {
   collaterals: UserAssets
@@ -24,6 +25,9 @@ interface HomePageProps {
   currentPosition: Position | undefined
   predictedPosition: Position | undefined
   baseTokenSymbol: string | undefined
+  markets: Deployments
+  selectedMarket: Deployment | undefined
+  onSelectMarket: (market: Deployment) => void
 }
 
 export function HomePage(
@@ -45,6 +49,9 @@ export function HomePage(
     currentPosition,
     predictedPosition,
     baseTokenSymbol,
+    markets,
+    selectedMarket,
+    onSelectMarket,
   }: HomePageProps
 ) {
   return (
@@ -53,6 +60,18 @@ export function HomePage(
         <div className="panel">
           <div className="panel__row">
             <h6 className="L2 heading text-color--1">Swap collateral</h6>
+            {
+              selectedMarket
+                ?
+                <MarketSelector
+                  value={selectedMarket}
+                  options={markets}
+                  onChange={(selection) => {
+                    onSelectMarket(selection)
+                  }}
+                />
+                : null
+            }
           </div>
           <div className="panel__column">
             <Label text="Collateral to swap"/>
