@@ -11,7 +11,7 @@ interface Props {
 
 export function QuoteExpectedAmounts({ expectedAmount, minimumAmount, isLoading, tokenSymbol }: Props) {
   if (isLoading) {
-    return <div>Loading...</div>
+    return <div className="panel__row panel__row__center">Loading...</div>
   }
 
   return expectedAmount ?
