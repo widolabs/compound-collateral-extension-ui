@@ -28,6 +28,7 @@ interface HomePageProps {
   markets: Deployments
   selectedMarket: Deployment | undefined
   onSelectMarket: (market: Deployment) => void
+  isExecuting: boolean
 }
 
 export function HomePage(
@@ -52,6 +53,7 @@ export function HomePage(
     markets,
     selectedMarket,
     onSelectMarket,
+    isExecuting
   }: HomePageProps
 ) {
   return (
@@ -110,7 +112,8 @@ export function HomePage(
               fromToken
                 ?
                 <label className="label text-color--2">
-                  <span className={`asset asset--icon asset--${fromToken}`}></span> {assetBalance} Available
+                  <span className={`asset asset--icon asset--${fromToken}`}></span> {assetBalance}&nbsp;
+                  <small>{fromToken} Available</small>
                 </label>
                 :
                 null
@@ -136,7 +139,11 @@ export function HomePage(
           />
           <div className="panel__column form_button">
             <button className="button button--large button--supply" onClick={onSwap} disabled={disabledButton}>
-              Swap
+              {
+                isExecuting
+                  ? "Executing"
+                  : "Swap"
+              }
             </button>
           </div>
           <PositionSummary

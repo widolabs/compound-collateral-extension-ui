@@ -34,6 +34,7 @@ export default ({ rpc, web3 }: AppProps) => {
   const [isLoading, setLoading] = useState<boolean>(false);
   const [currentPosition, setCurrentPosition] = useState<Position | undefined>();
   const [predictedPosition, setPredictedPosition] = useState<Position | undefined>();
+  const [isExecuting, setIsExecuting] = useState<boolean>(false);
 
   const deployments = WidoCompoundSdk.getDeployments();
 
@@ -110,7 +111,19 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   const executeSwap = async () => {
     if (swapQuote && widoSdk && isSupportedNetwork) {
-      await widoSdk.swapCollateral(swapQuote)
+      setIsExecuting(true);
+      const txHash = await widoSdk.swapCollateral(swapQuote);
+      web3.waitForTransaction(txHash)
+        .then(async () => {
+          setSelectedFromToken("");
+          setSelectedToToken("");
+          setAmount("");
+          const assets = await widoSdk.getUserCollaterals();
+          setUserAssets(assets);
+        })
+        .finally(() => {
+          setIsExecuting(false);
+        })
     }
   }
 
@@ -134,10 +147,11 @@ export default ({ rpc, web3 }: AppProps) => {
     if (!selectedToToken) return true
     if (!amount) return true
     if (isLoading) return true
+    if (isExecuting) return true
     const fromTokenBalance = getFromTokenBalance()
     const fromAmount = getFromAmount();
     return fromAmount.gt(fromTokenBalance);
-  }, [amount, assetBalance, selectedFromToken, selectedToToken, isLoading])
+  }, [amount, assetBalance, selectedFromToken, selectedToToken, isLoading, isExecuting])
 
   /**
    * Callback that is executed when the user selects "max amount"
@@ -281,6 +295,7 @@ export default ({ rpc, web3 }: AppProps) => {
           currentPosition={currentPosition}
           predictedPosition={predictedPosition}
           baseTokenSymbol={selectedMarket?.asset}
+          isExecuting={isExecuting}
         />
       </div>
     </div>
