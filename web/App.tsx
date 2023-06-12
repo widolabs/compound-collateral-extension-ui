@@ -260,12 +260,6 @@ export default ({ rpc, web3 }: AppProps) => {
   return (
     <div className="page home">
       <div className="container">
-        <div className="masthead L1">
-          <h1 className="L0 heading heading--emphasized">
-            Wido Collateral Swaps
-          </h1>
-        </div>
-
         <HomePage
           selectedMarket={selectedMarket}
           markets={markets}
