@@ -15,10 +15,17 @@ import { useAsyncEffect } from './lib/useAsyncEffect';
 import { useDebouncedCallback } from 'use-debounce';
 import { BigNumber } from 'ethers';
 import { formatAmount, getAmountParts, getDecimals, getTokenUnit, ZERO } from './lib/utils';
+import { SuccessPage } from './SuccessPage';
 
 interface AppProps {
   rpc?: RPC
   web3: JsonRpcProvider
+}
+
+enum SwapStatus {
+  Preparing,
+  Success,
+  Failed,
 }
 
 export default ({ rpc, web3 }: AppProps) => {
@@ -35,6 +42,9 @@ export default ({ rpc, web3 }: AppProps) => {
   const [currentPosition, setCurrentPosition] = useState<Position | undefined>();
   const [predictedPosition, setPredictedPosition] = useState<Position | undefined>();
   const [isExecuting, setIsExecuting] = useState<boolean>(false);
+  const [chainId, setChainId] = useState<number>(0);
+  const [txHash, setTxHash] = useState<string>("");
+  const [swapStatus, setSwapStatus] = useState<SwapStatus>(SwapStatus.Preparing);
 
   const deployments = WidoCompoundSdk.getDeployments();
 
@@ -47,6 +57,16 @@ export default ({ rpc, web3 }: AppProps) => {
       return new WidoCompoundSdk(signer, selectedMarket.cometKey)
     }
   }, [web3, account, selectedMarket, isSupportedNetwork]);
+
+  /**
+   * Load chain Id
+   */
+  useAsyncEffect(async () => {
+    if (web3) {
+      const chainId = await web3.getNetwork()
+      setChainId(chainId.chainId);
+    }
+  }, [web3]);
 
   /**
    * Logic callback when selecting `fromToken`
@@ -111,19 +131,20 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   const executeSwap = async () => {
     if (swapQuote && widoSdk && isSupportedNetwork) {
-      setIsExecuting(true);
       const txHash = await widoSdk.swapCollateral(swapQuote);
+      setIsExecuting(true);
+      setTxHash(txHash);
       web3.waitForTransaction(txHash)
         .then(async () => {
-          setSelectedFromToken("");
-          setSelectedToToken("");
-          setAmount("");
-          const assets = await widoSdk.getUserCollaterals();
-          setUserAssets(assets);
+          setSwapStatus(SwapStatus.Success);
+          await loadUserAssets();
+        })
+        .catch(error => {
+          setSwapStatus(SwapStatus.Failed);
         })
         .finally(() => {
           setIsExecuting(false);
-        })
+        });
     }
   }
 
@@ -195,12 +216,15 @@ export default ({ rpc, web3 }: AppProps) => {
    * Async effect to keep balances updated when the SDK changes
    */
   useAsyncEffect(async () => {
+    await loadUserAssets();
+  }, [widoSdk, isSupportedNetwork]);
+
+  const loadUserAssets = async () => {
     if (widoSdk && isSupportedNetwork) {
       const assets = await widoSdk.getUserCollaterals();
       setUserAssets(assets);
     }
-  }, [widoSdk, isSupportedNetwork]);
-
+  }
   /**
    * Effect to manage quoting logic
    */
@@ -274,29 +298,50 @@ export default ({ rpc, web3 }: AppProps) => {
   return (
     <div className="page home">
       <div className="container">
-        <HomePage
-          selectedMarket={selectedMarket}
-          markets={markets}
-          onSelectMarket={setSelectedMarket}
-          collaterals={userAssets}
-          fromToken={selectedFromToken}
-          toToken={selectedToToken}
-          amount={amount}
-          assetBalance={assetBalance}
-          setFromToken={selectFromToken}
-          setToToken={selectToToken}
-          setAmount={setAmount}
-          onMaxClick={onMaxClick}
-          onSwap={executeSwap}
-          disabledButton={disabledButton}
-          expectedAmount={expectedAmount}
-          minimumAmount={minimumAmount}
-          isLoading={isLoading}
-          currentPosition={currentPosition}
-          predictedPosition={predictedPosition}
-          baseTokenSymbol={selectedMarket?.asset}
-          isExecuting={isExecuting}
-        />
+        {
+          swapStatus == SwapStatus.Preparing
+            ?
+            <HomePage
+              selectedMarket={selectedMarket}
+              markets={markets}
+              onSelectMarket={setSelectedMarket}
+              collaterals={userAssets}
+              fromToken={selectedFromToken}
+              toToken={selectedToToken}
+              amount={amount}
+              assetBalance={assetBalance}
+              setFromToken={selectFromToken}
+              setToToken={selectToToken}
+              setAmount={setAmount}
+              onMaxClick={onMaxClick}
+              onSwap={executeSwap}
+              disabledButton={disabledButton}
+              expectedAmount={expectedAmount}
+              minimumAmount={minimumAmount}
+              isLoading={isLoading}
+              currentPosition={currentPosition}
+              predictedPosition={predictedPosition}
+              baseTokenSymbol={selectedMarket?.asset}
+              isExecuting={isExecuting}
+            />
+            : null
+        }
+        {
+          swapStatus == SwapStatus.Success
+            ? <SuccessPage
+              fromAsset={selectedFromToken}
+              toAsset={selectedToToken}
+              chainId={chainId}
+              txHash={txHash}
+              onClick={() => {
+                setSelectedFromToken("");
+                setSelectedToToken("");
+                setAmount("");
+                setSwapStatus(SwapStatus.Preparing);
+              }}
+            />
+            : null
+        }
       </div>
     </div>
   )

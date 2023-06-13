@@ -141,7 +141,7 @@ export function HomePage(
             <button className="button button--large button--supply" onClick={onSwap} disabled={disabledButton}>
               {
                 isExecuting
-                  ? "Executing"
+                  ? "In progress"
                   : "Swap"
               }
             </button>
