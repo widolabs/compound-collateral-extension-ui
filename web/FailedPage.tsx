@@ -1,22 +1,18 @@
 import React from "react";
 import { TxHashLinkProps } from './components/TxHashLink';
 
-interface SuccessPageProps {
-  fromAsset: string
-  toAsset: string
+interface FailedPageProps {
   chainId: number
   txHash: string
   onClick: () => void
 }
 
-export function SuccessPage(
+export function FailedPage(
   {
-    fromAsset,
-    toAsset,
     txHash,
     chainId,
     onClick
-  }: SuccessPageProps
+  }: FailedPageProps
 ) {
   return (
     <div className="home__content">
@@ -24,10 +20,11 @@ export function SuccessPage(
         <div className="panel">
           <div className="success_page">
             <div className="panel__row panel__row__center">
-              <h1 className="">Success!</h1>
+              <h1 className="">Ops!</h1>
             </div>
-            <div className="panel__row panel__row__center message">
-              <p>You successfully swapped your {fromAsset} collateral to {toAsset}.</p>
+            <div className="panel__column panel__row__center message">
+              <p>Something went wrong while trying to execute the swap.</p>
+              <a href="https://docs.joinwido.com/company/contact-us" target="_blank" style={{color: "gray"}}>Reach out for support</a>
             </div>
             <div className="panel__row panel__row__center">
               <TxHashLinkProps
@@ -36,8 +33,8 @@ export function SuccessPage(
               />
             </div>
             <div className="panel__row panel__row__center">
-              <button className="button button--large button--supply" onClick={onClick}>
-                Swap again
+              <button className="button button--large button--failed" onClick={onClick}>
+                Try again
               </button>
             </div>
           </div>

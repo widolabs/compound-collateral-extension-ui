@@ -16,6 +16,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { BigNumber } from 'ethers';
 import { formatAmount, getAmountParts, getDecimals, getTokenUnit, ZERO } from './lib/utils';
 import { SuccessPage } from './SuccessPage';
+import { FailedPage } from './FailedPage';
 
 interface AppProps {
   rpc?: RPC
@@ -219,6 +220,9 @@ export default ({ rpc, web3 }: AppProps) => {
     await loadUserAssets();
   }, [widoSdk, isSupportedNetwork]);
 
+  /**
+   * Loads all user's assets
+   */
   const loadUserAssets = async () => {
     if (widoSdk && isSupportedNetwork) {
       const assets = await widoSdk.getUserCollaterals();
@@ -287,6 +291,16 @@ export default ({ rpc, web3 }: AppProps) => {
     }
   }, [swapQuote])
 
+  /**
+   * Sets all the interface to initial state
+   */
+  const cleanInterface = () => {
+    setSelectedFromToken("");
+    setSelectedToToken("");
+    setAmount("");
+    setSwapStatus(SwapStatus.Preparing);
+  };
+
   // guard clauses
   if (!isSupportedNetwork) {
     return <div>Unsupported network...</div>;
@@ -333,12 +347,16 @@ export default ({ rpc, web3 }: AppProps) => {
               toAsset={selectedToToken}
               chainId={chainId}
               txHash={txHash}
-              onClick={() => {
-                setSelectedFromToken("");
-                setSelectedToToken("");
-                setAmount("");
-                setSwapStatus(SwapStatus.Preparing);
-              }}
+              onClick={cleanInterface}
+            />
+            : null
+        }
+        {
+          swapStatus == SwapStatus.Failed
+            ? <FailedPage
+              chainId={chainId}
+              txHash={txHash}
+              onClick={cleanInterface}
             />
             : null
         }
