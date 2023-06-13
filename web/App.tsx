@@ -314,51 +314,50 @@ export default ({ rpc, web3 }: AppProps) => {
       <div className="container">
         {
           swapStatus == SwapStatus.Preparing
-            ?
-            <HomePage
-              selectedMarket={selectedMarket}
-              markets={markets}
-              onSelectMarket={setSelectedMarket}
-              collaterals={userAssets}
-              fromToken={selectedFromToken}
-              toToken={selectedToToken}
-              amount={amount}
-              assetBalance={assetBalance}
-              setFromToken={selectFromToken}
-              setToToken={selectToToken}
-              setAmount={setAmount}
-              onMaxClick={onMaxClick}
-              onSwap={executeSwap}
-              disabledButton={disabledButton}
-              expectedAmount={expectedAmount}
-              minimumAmount={minimumAmount}
-              isLoading={isLoading}
-              currentPosition={currentPosition}
-              predictedPosition={predictedPosition}
-              baseTokenSymbol={selectedMarket?.asset}
-              isExecuting={isExecuting}
-            />
-            : null
+          &&
+          <HomePage
+            selectedMarket={selectedMarket}
+            markets={markets}
+            onSelectMarket={setSelectedMarket}
+            collaterals={userAssets}
+            fromToken={selectedFromToken}
+            toToken={selectedToToken}
+            amount={amount}
+            assetBalance={assetBalance}
+            setFromToken={selectFromToken}
+            setToToken={selectToToken}
+            setAmount={setAmount}
+            onMaxClick={onMaxClick}
+            onSwap={executeSwap}
+            disabledButton={disabledButton}
+            expectedAmount={expectedAmount}
+            minimumAmount={minimumAmount}
+            isLoading={isLoading}
+            currentPosition={currentPosition}
+            predictedPosition={predictedPosition}
+            baseTokenSymbol={selectedMarket?.asset}
+            isExecuting={isExecuting}
+          />
         }
         {
           swapStatus == SwapStatus.Success
-            ? <SuccessPage
-              fromAsset={selectedFromToken}
-              toAsset={selectedToToken}
-              chainId={chainId}
-              txHash={txHash}
-              onClick={cleanInterface}
-            />
-            : null
+          &&
+          <SuccessPage
+            fromAsset={selectedFromToken}
+            toAsset={selectedToToken}
+            chainId={chainId}
+            txHash={txHash}
+            onClick={cleanInterface}
+          />
         }
         {
           swapStatus == SwapStatus.Failed
-            ? <FailedPage
-              chainId={chainId}
-              txHash={txHash}
-              onClick={cleanInterface}
-            />
-            : null
+          &&
+          <FailedPage
+            chainId={chainId}
+            txHash={txHash}
+            onClick={cleanInterface}
+          />
         }
       </div>
     </div>
