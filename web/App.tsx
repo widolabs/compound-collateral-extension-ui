@@ -303,7 +303,9 @@ export default ({ rpc, web3 }: AppProps) => {
 
   // guard clauses
   if (!isSupportedNetwork) {
-    return <div>Unsupported network...</div>;
+    return <div className="panel__row panel__row__center">
+      <h1 style={{color: "white", margin: "3rem"}}>Unsupported network</h1>
+    </div>;
   }
   if (!account) {
     return <div>Loading...</div>;
