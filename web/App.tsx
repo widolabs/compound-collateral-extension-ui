@@ -337,6 +337,7 @@ export default ({ rpc, web3 }: AppProps) => {
             predictedPosition={predictedPosition}
             baseTokenSymbol={selectedMarket?.asset}
             isExecuting={isExecuting}
+            fees={swapQuote?.fees}
           />
         }
         {

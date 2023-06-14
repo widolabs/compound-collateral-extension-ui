@@ -4,7 +4,7 @@ import { ArrowDown } from "./Icons";
 import { Label } from "./components/Label";
 import { PositionSummary } from "./components/PositionSummary";
 import { QuoteExpectedAmounts } from "./components/QuoteExpectedAmounts";
-import { Deployment, Deployments, Position, UserAssets } from "@widolabs/collateral-swap-sdk";
+import { Deployment, Deployments, Fees, Position, UserAssets } from "@widolabs/collateral-swap-sdk";
 import { MarketSelector } from './components/MarketSelector';
 
 interface HomePageProps {
@@ -29,6 +29,7 @@ interface HomePageProps {
   selectedMarket: Deployment | undefined
   onSelectMarket: (market: Deployment) => void
   isExecuting: boolean
+  fees?: Fees
 }
 
 export function HomePage(
@@ -53,7 +54,8 @@ export function HomePage(
     markets,
     selectedMarket,
     onSelectMarket,
-    isExecuting
+    isExecuting,
+    fees,
   }: HomePageProps
 ) {
   return (
@@ -136,6 +138,7 @@ export function HomePage(
             expectedAmount={expectedAmount}
             minimumAmount={minimumAmount}
             tokenSymbol={toToken}
+            fees={fees}
           />
           <div className="panel__column form_button">
             <button className="button button--large button--supply" onClick={onSwap} disabled={disabledButton}>
