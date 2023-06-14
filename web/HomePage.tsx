@@ -134,6 +134,8 @@ export function HomePage(
             />
           </div>
           <QuoteExpectedAmounts
+            fromToken={fromToken}
+            toToken={toToken}
             isLoading={isLoading}
             expectedAmount={expectedAmount}
             minimumAmount={minimumAmount}

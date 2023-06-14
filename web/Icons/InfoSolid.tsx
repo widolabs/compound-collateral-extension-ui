@@ -1,7 +1,8 @@
-export const InfoSolid = ({ className = '' }: { className?: string }) => {
+export const InfoSolid = ({ className = '', style = {} }: { className?: string, style?: {} }) => {
   return (
     <svg
       className={`svg ${className}`}
+      style={style}
       width="24"
       height="24"
       viewBox="0 0 24 24"
