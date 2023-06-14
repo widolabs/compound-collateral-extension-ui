@@ -46,7 +46,7 @@ export function QuoteExpectedAmounts(
           <Label text="Fees"/>
           <label
             className="label text-color--1"
-            title={`Loan provider takes ${fees.providerFee} ${toToken} and Wido takes ${fees.widoFee} ${fromToken}`}>
+            title={`Flash loan provider takes ${fees.providerFee} ${toToken} and Wido takes ${fees.widoFee} ${fromToken}`}>
             ~ {fees.totalUsd.toFixed(2)} USD&nbsp;
             <InfoSolid className="svg--icon--2" style={{ width: "15px", height: "15px", cursor: "pointer" }}/>
           </label>
