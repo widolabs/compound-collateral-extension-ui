@@ -23,8 +23,8 @@ button,
   }
 
   .svg {
-    height: 1rem;
-    width: 1rem;
+    height: 0.75rem;
+    width: 0.75rem;
 
     &__path {
       fill: var(--text--button-label);
@@ -154,6 +154,19 @@ button,
           border: 2px solid $green--90;
         }
       }
+      &--failed {
+        background-color: #640505;
+        border: 2px solid #d20000;
+        color: #ffffff;
+
+        &.button--selected {
+          border: 2px solid $red--50;
+        }
+        &.button--deselected {
+          background-color: var(--button--neutral--disabled--1);
+          border: 2px solid $red--90;
+        }
+      }
     }
   }
 
@@ -189,11 +202,11 @@ button,
 
   &:not(:disabled) {
     &:hover {
-      filter: brightness(90%);
+      background-color: #{darken($neutral--80, 3%)};
     }
 
     &:active {
-      filter: brightness(85%);
+      background-color: var(--button--neutral);
     }
   }
 

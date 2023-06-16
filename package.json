@@ -1,20 +1,16 @@
 {
-  "name": "comet-extension-template",
+  "name": "collaterall-swap-extension",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "web:dev": "vite",
-    "web:build": "tsc && vite build",
-    "web:deploy": "tsc && vite build && node script/ipfs.js",
-    "web:preview": "vite preview",
-    "web:test": "jest",
-    "forge:build": "forge build",
-    "forge:test": "script/test.sh",
-    "forge:lint": "solhint '{src,script,test}/**/*.sol'",
-    "forge:playground": "script/playground.sh"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "deploy": "tsc && vite build && node script/ipfs.js",
+    "preview": "vite preview",
+    "test": "jest"
   },
   "dependencies": {
-    "@compound-finance/comet-extension": "^0.0.5",
+    "@compound-finance/comet-extension": "^0.0.15",
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
     "@ethersproject/abi": "^5.6.2",
     "@ethersproject/bignumber": "^5.4.2",
@@ -27,12 +23,15 @@
     "@web3-react/network": "8.0.27-beta.0",
     "@web3-react/types": "8.0.20-beta.0",
     "@web3-react/url": "8.0.25-beta.0",
+    "@widolabs/collateral-swap-sdk": "^0.1.0",
     "comet": "https://github.com/compound-finance/comet.git#c54ccc62e06186bdf237048ac7c9f3ce34d813b4",
     "compound-config": "https://github.com/compound-finance/compound-config.git#0815f079ebe6c7421361b3334f7b8eaab50722b0",
     "compound-styles": "https://github.com/compound-finance/compound-styles.git#fc29b8a832c698920f2fcf7a06d978c4580a48e1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "rollup-plugin-polyfill-node": "^0.10.2"
+    "react-outside-click-handler": "^1.3.0",
+    "rollup-plugin-polyfill-node": "^0.10.2",
+    "use-debounce": "^9.0.4"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.2",
@@ -41,6 +40,7 @@
     "@types/node": "17.0.21",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
+    "@types/react-outside-click-handler": "^1.3.1",
     "@types/uuid": "^8.3.4",
     "@vitejs/plugin-react": "^2.0.1",
     "@web3-react/types": "8.0.20-beta.0",

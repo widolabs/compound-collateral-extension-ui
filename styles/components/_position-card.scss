@@ -54,14 +54,6 @@
     }
   }
 
-  &__summary {
-    position: relative;
-    margin-top: 1.25rem;
-    width: 100%;
-    z-index: 5;
-    transition: transform 300ms ease, margin 300ms ease;
-  }
-
   &__button-row {
     margin-top: 0.875rem;
     padding: 0 1.25rem;

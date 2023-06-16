@@ -1,168 +1,368 @@
-import '../styles/main.scss';
-import { RPC } from '@compound-finance/comet-extension';
-import { Fragment, useEffect, useMemo, useState } from 'react';
-import ERC20 from '../abis/ERC20';
-import Comet from '../abis/Comet';
-import { CTokenSym, Network, NetworkConfig, getNetwork, getNetworkById, getNetworkConfig, isNetwork, showNetwork } from './Network';
-import { JsonRpcProvider } from '@ethersproject/providers';
-import { Contract, ContractInterface } from '@ethersproject/contracts';
-import { Close } from './Icons/Close';
-import { CircleCheckmark } from './Icons/CircleCheckmark';
+import "../styles/main.scss";
+import { RPC } from "@compound-finance/comet-extension";
+import { useEffect, useMemo, useState } from "react";
+import { JsonRpcProvider } from "@ethersproject/providers";
+import {
+  WidoCompoundSdk,
+  CollateralSwapRoute,
+  Deployments,
+  UserAssets,
+  Deployment,
+  Position
+} from "@widolabs/collateral-swap-sdk";
+import { HomePage } from "./HomePage";
+import { useAsyncEffect } from './lib/useAsyncEffect';
+import { useDebouncedCallback } from 'use-debounce';
+import { BigNumber } from 'ethers';
+import { formatAmount, getAmountParts, getDecimals, getTokenUnit, ZERO } from './lib/utils';
+import { SuccessPage } from './SuccessPage';
+import { FailedPage } from './FailedPage';
 
 interface AppProps {
-  rpc?: RPC,
+  rpc?: RPC
   web3: JsonRpcProvider
 }
 
-type AppPropsExt<N extends Network> = AppProps & {
-  account: string,
-  networkConfig: NetworkConfig<N>
+enum SwapStatus {
+  Preparing,
+  Success,
+  Failed,
 }
 
-interface AccountState<Network> {
-  extEnabled: boolean;
-}
-
-function usePoll(timeout: number) {
-  const [timer, setTimer] = useState(0);
-
-  useEffect(() => {
-    let t: NodeJS.Timer;
-    function loop(x: number, delay: number) {
-      t = setTimeout(() => {
-        requestAnimationFrame(() => {
-          setTimer(x);
-          loop(x + 1, delay);
-        });
-      }, delay);
-    }
-    loop(1, timeout);
-    return () => clearTimeout(t)
-  }, []);
-
-  return timer;
-}
-
-function useAsyncEffect(fn: () => Promise<void>, deps: any[] = []) {
-  useEffect(() => {
-    (async () => {
-      await fn();
-    })();
-  }, deps);
-}
-
-
-
-export function App<N extends Network>({rpc, web3, account, networkConfig}: AppPropsExt<N>) {
-  let { cTokenNames } = networkConfig;
-
-  const signer = useMemo(() => {
-    return web3.getSigner().connectUnchecked();
-  }, [web3, account]);
-
-  const initialAccountState = () => ({
-    extEnabled: false,
-  });
-  const [accountState, setAccountState] = useState<AccountState<Network>>(initialAccountState);
-
-  const ext = useMemo(() => new Contract(networkConfig.extAddress, networkConfig.extAbi, signer), [signer]);
-  const comet = useMemo(() => new Contract(networkConfig.rootsV3.comet, Comet, signer), [signer]);
-
-  async function enableExt() {
-    console.log("enabling ext");
-    await comet.allow(ext.address, true);
-    console.log("enabled ext");
-  }
-
-  async function disableExt() {
-    console.log("disabling ext");
-    await comet.allow(ext.address, false);
-    console.log("disabling ext");
-  }
-
-  return (
-    <div className="page home">
-      <div className="container">
-        <div className="masthead L1">
-          <h1 className="L0 heading heading--emphasized">My Comet Extension</h1>
-          { accountState.extEnabled ?
-            <button className="button button--large button--supply" onClick={disableExt}>
-              <CircleCheckmark />
-              <label>Enabled</label>
-            </button> :
-            <button className="button button--large button--supply" onClick={enableExt}>Enable</button> }
-        </div>
-        <div className="home__content">
-          <div className="home__assets">
-            <div className="panel panel--assets">
-              <div className="panel__header-row">
-                <label className="L1 label text-color--1">My Extension Dashboard</label>
-              </div>
-              <div className="panel__header-row">
-                <label className="label text-color--1">
-                  A dashboard to control how a user utilizes your extension.
-                </label>
-              </div>
-              { null }
-              <div className="panel__header-row">
-                <label className="L1 label text-color--2">Debug Information</label>
-                <label className="label text-color--2">
-                  network={ showNetwork(networkConfig.network) }<br/>
-                  account={ account }<br/>
-                </label>
-              </div>
-            </div>
-          </div>
-          <div className="home__sidebar">
-            <div className="position-card__summary">
-              <div className="panel position-card L3">
-                <div className="panel__header-row">
-                  <label className="L1 label text-color--1">Summary</label>
-                </div>
-                <div className="panel__header-row">
-                  <p className="text-color--1">
-                    Further information about your extension.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default ({rpc, web3}: AppProps) => {
-  let timer = usePoll(10000);
+export default ({ rpc, web3 }: AppProps) => {
+  const [markets, setMarkets] = useState<Deployments>([]);
+  const [isSupportedNetwork, setIsSupportedNetwork] = useState<boolean>(false);
+  const [selectedMarket, setSelectedMarket] = useState<Deployment | undefined>();
   const [account, setAccount] = useState<string | null>(null);
-  const [networkConfig, setNetworkConfig] = useState<NetworkConfig<Network> | 'unsupported' | null>(null);
+  const [selectedFromToken, setSelectedFromToken] = useState("");
+  const [selectedToToken, setSelectedToToken] = useState("");
+  const [amount, setAmount] = useState("");
+  const [swapQuote, setSwapQuote] = useState<CollateralSwapRoute | undefined>();
+  const [userAssets, setUserAssets] = useState<UserAssets>([]);
+  const [isLoading, setLoading] = useState<boolean>(false);
+  const [currentPosition, setCurrentPosition] = useState<Position | undefined>();
+  const [predictedPosition, setPredictedPosition] = useState<Position | undefined>();
+  const [isExecuting, setIsExecuting] = useState<boolean>(false);
+  const [chainId, setChainId] = useState<number>(0);
+  const [txHash, setTxHash] = useState<string>("");
+  const [swapStatus, setSwapStatus] = useState<SwapStatus>(SwapStatus.Preparing);
 
+  const deployments = WidoCompoundSdk.getDeployments();
+
+  /**
+   * Memo to build the SDK whenever the chain/account/market changes
+   */
+  const widoSdk = useMemo(() => {
+    if (selectedMarket && isSupportedNetwork) {
+      const signer = web3.getSigner().connectUnchecked();
+      return new WidoCompoundSdk(signer, selectedMarket.cometKey)
+    }
+  }, [web3, account, selectedMarket, isSupportedNetwork]);
+
+  /**
+   * Load chain Id
+   */
+  useAsyncEffect(async () => {
+    if (web3) {
+      const chainId = await web3.getNetwork()
+      setChainId(chainId.chainId);
+    }
+  }, [web3]);
+
+  /**
+   * Logic callback when selecting `fromToken`
+   * @param selection
+   */
+  const selectFromToken = (selection: string) => {
+    if (selection === selectedToToken) {
+      setSelectedToToken(selectedFromToken)
+    }
+    setSelectedFromToken(selection);
+    setAmount("");
+    setPredictedPosition(undefined);
+    setSwapQuote(undefined);
+  }
+
+  /**
+   * Logic callback when selecting `toToken`
+   * @param selection
+   */
+  const selectToToken = (selection: string) => {
+    if (selection === selectedFromToken) {
+      setSelectedFromToken(selectedToToken)
+    }
+    setSelectedToToken(selection);
+  }
+
+  /**
+   * Returns a BigNumber that represents the `amount` string input by the user
+   */
+  const getFromAmount = (): BigNumber => {
+    if (!amount) {
+      return ZERO;
+    }
+    const decimals = getDecimals(userAssets, selectedFromToken);
+    const _unit = getTokenUnit(decimals)
+    if (amount.indexOf(".") === -1) {
+      // if not decimals, we can just multiply
+      return BigNumber.from(amount).mul(_unit);
+    }
+    // separate parts
+    const parts = amount.split(".");
+    const integerPart = BigNumber.from(parts[0]).mul(_unit);
+    const decimalPart = BigNumber.from(parts[1] + ("0".repeat(decimals - parts[1].length)))
+    // compose BigNumber
+    return integerPart.add(decimalPart);
+  }
+
+  /**
+   * Returns a BigNumber of the available user's balance of the selected `fromToken`
+   */
+  const getFromTokenBalance = (): BigNumber => {
+    for (const asset of userAssets) {
+      if (asset.name === selectedFromToken) {
+        return asset.balance
+      }
+    }
+    return ZERO;
+  }
+
+  /**
+   * Collateral swap execution function
+   */
+  const executeSwap = async () => {
+    if (swapQuote && widoSdk && isSupportedNetwork) {
+      const txHash = await widoSdk.swapCollateral(swapQuote);
+      setIsExecuting(true);
+      setTxHash(txHash);
+      web3.waitForTransaction(txHash)
+        .then(async () => {
+          setSwapStatus(SwapStatus.Success);
+          await loadUserAssets();
+        })
+        .catch(error => {
+          setSwapStatus(SwapStatus.Failed);
+        })
+        .finally(() => {
+          setIsExecuting(false);
+        });
+    }
+  }
+
+  /**
+   * Memo to keep updated the max balance when the asset changes
+   */
+  const assetBalance = useMemo(() => {
+    if (!selectedFromToken) {
+      return "0";
+    }
+    const decimals = getDecimals(userAssets, selectedFromToken);
+    const balance = getFromTokenBalance();
+    return formatAmount(balance, decimals);
+  }, [selectedFromToken, widoSdk])
+
+  /**
+   * Memo to keep the swap button disable state updated when balance/amount changes
+   */
+  const disabledButton = useMemo(() => {
+    if (!selectedFromToken) return true
+    if (!selectedToToken) return true
+    if (!amount) return true
+    if (isLoading) return true
+    if (isExecuting) return true
+    const fromTokenBalance = getFromTokenBalance()
+    const fromAmount = getFromAmount();
+    return fromAmount.gt(fromTokenBalance);
+  }, [amount, assetBalance, selectedFromToken, selectedToToken, isLoading, isExecuting])
+
+  /**
+   * Callback that is executed when the user selects "max amount"
+   * It converts the user's balance into a string to set it as `amount`
+   */
+  const onMaxClick = () => {
+    if (!selectedFromToken) return;
+    const decimals = getDecimals(userAssets, selectedFromToken);
+    const balance = getFromTokenBalance();
+    if (balance.eq(ZERO)) return;
+    const { integer, decimal } = getAmountParts(balance, decimals);
+    // compose full string
+    const balanceString = integer + "." + decimal
+    setAmount(balanceString);
+  }
+
+  /**
+   * Async effect to keep markets updated when chain changes
+   */
+  useAsyncEffect(async () => {
+    const currentChainId = await web3.getSigner().getChainId()
+    const supportedMarkets = deployments.filter(d => d.chainId === currentChainId);
+    const isSupported = supportedMarkets.length > 0;
+    setIsSupportedNetwork(isSupported);
+    setMarkets(supportedMarkets)
+    setSelectedMarket(isSupported ? supportedMarkets[0] : undefined)
+  }, [web3]);
+
+  /**
+   * Async effect to keep account updated
+   */
   useAsyncEffect(async () => {
     let accounts = await web3.listAccounts();
     if (accounts.length > 0) {
       let [account] = accounts;
       setAccount(account);
     }
-  }, [web3, timer]);
+  }, [web3]);
 
+  /**
+   * Async effect to keep balances updated when the SDK changes
+   */
   useAsyncEffect(async () => {
-    let networkWeb3 = await web3.getNetwork();
-    let network = getNetworkById(networkWeb3.chainId);
-    if (network) {
-      setNetworkConfig(getNetworkConfig(network));
-    } else {
-      setNetworkConfig('unsupported');
-    }
-  }, [web3, timer]);
+    await loadUserAssets();
+  }, [widoSdk, isSupportedNetwork]);
 
-  if (networkConfig && account) {
-    if (networkConfig === 'unsupported') {
-      return <div>Unsupported network...</div>;
-    } else {
-      return <App rpc={rpc} web3={web3} account={account} networkConfig={networkConfig} />;
+  /**
+   * Loads all user's assets
+   */
+  const loadUserAssets = async () => {
+    if (widoSdk && isSupportedNetwork) {
+      const assets = await widoSdk.getUserCollaterals();
+      setUserAssets(assets);
     }
-  } else {
+  }
+  /**
+   * Effect to manage quoting logic
+   */
+  useEffect(() => {
+    if (selectedFromToken && selectedToToken && amount) {
+      setLoading(true);
+      setPredictedPosition(undefined);
+      quote()
+    }
+  }, [selectedFromToken, selectedToToken, amount])
+
+  /**
+   * Debounced quote function
+   */
+  const quote = useDebouncedCallback(async () => {
+    if (widoSdk && isSupportedNetwork) {
+      const fromAmount = getFromAmount();
+      const quote = await widoSdk.getCollateralSwapRoute(
+        selectedFromToken,
+        selectedToToken,
+        fromAmount
+      ).then((response) => {
+        setLoading(false);
+        return response;
+      })
+      setSwapQuote(quote)
+      // Compute predicted position
+      const predictedPosition = await widoSdk.getUserPredictedPosition(quote);
+      setPredictedPosition(predictedPosition);
+    }
+  }, 1000);
+
+  /**
+   * Fetch current position when `fromToken` is selected
+   */
+  useAsyncEffect(async () => {
+    if (widoSdk && selectedFromToken) {
+      const currentPosition = await widoSdk.getUserCurrentPosition();
+      setCurrentPosition(currentPosition);
+    }
+  }, [selectedFromToken, widoSdk]);
+
+  /**
+   * Computes formatted amount to be shown for the quote's expected amounts
+   * @param quote
+   */
+  const { expectedAmount, minimumAmount } = useMemo(() => {
+    if (!swapQuote) {
+      return {
+        expectedAmount: "",
+        minimumAmount: "",
+      }
+    }
+    const decimals = getDecimals(userAssets, selectedToToken);
+    const expectedAmount = formatAmount(BigNumber.from(swapQuote.toCollateralAmount), decimals, 6);
+    const minimumAmount = formatAmount(BigNumber.from(swapQuote.toCollateralMinAmount), decimals, 6);
+    return {
+      expectedAmount,
+      minimumAmount,
+    }
+  }, [swapQuote])
+
+  /**
+   * Sets all the interface to initial state
+   */
+  const cleanInterface = () => {
+    setSelectedFromToken("");
+    setSelectedToToken("");
+    setAmount("");
+    setSwapStatus(SwapStatus.Preparing);
+  };
+
+  // guard clauses
+  if (!isSupportedNetwork) {
+    return <div className="panel__row panel__row__center">
+      <h1 style={{color: "white", margin: "3rem"}}>Unsupported network</h1>
+    </div>;
+  }
+  if (!account) {
     return <div>Loading...</div>;
   }
+
+  return (
+    <div className="page home">
+      <div className="container">
+        {
+          swapStatus == SwapStatus.Preparing
+          &&
+          <HomePage
+            selectedMarket={selectedMarket}
+            markets={markets}
+            onSelectMarket={setSelectedMarket}
+            collaterals={userAssets}
+            fromToken={selectedFromToken}
+            toToken={selectedToToken}
+            amount={amount}
+            assetBalance={assetBalance}
+            setFromToken={selectFromToken}
+            setToToken={selectToToken}
+            setAmount={setAmount}
+            onMaxClick={onMaxClick}
+            onSwap={executeSwap}
+            disabledButton={disabledButton}
+            expectedAmount={expectedAmount}
+            minimumAmount={minimumAmount}
+            isLoading={isLoading}
+            currentPosition={currentPosition}
+            predictedPosition={predictedPosition}
+            baseTokenSymbol={selectedMarket?.asset}
+            isExecuting={isExecuting}
+            fees={swapQuote?.fees}
+          />
+        }
+        {
+          swapStatus == SwapStatus.Success
+          &&
+          <SuccessPage
+            fromAsset={selectedFromToken}
+            toAsset={selectedToToken}
+            chainId={chainId}
+            txHash={txHash}
+            onClick={cleanInterface}
+          />
+        }
+        {
+          swapStatus == SwapStatus.Failed
+          &&
+          <FailedPage
+            chainId={chainId}
+            txHash={txHash}
+            onClick={cleanInterface}
+          />
+        }
+      </div>
+    </div>
+  )
 };

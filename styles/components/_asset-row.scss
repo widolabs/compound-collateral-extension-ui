@@ -57,23 +57,4 @@
     }
   }
 
-  &__balance {
-    width: calc(60% - $actions-width);
-    margin-left: auto;
-    text-align: right;
-  }
-
-  &__actions {
-    align-items: center;
-    display: flex;
-    justify-content: flex-end;
-    flex-shrink: 0;
-    white-space: nowrap;
-    width: $actions-width;
-    text-align: right;
-
-    .button + .button {
-      margin-left: 0.5rem;
-    }
-  }
 }

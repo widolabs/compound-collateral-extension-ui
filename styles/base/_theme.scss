@@ -99,6 +99,10 @@
       color: var(--text--3);
     }
 
+    &--4 {
+      color: #00C289;
+    }
+
     &--button-label {
       color: var(--text--button-label);
     }
@@ -119,4 +123,9 @@
       color: var(--text--supply);
     }
   }
+}
+
+.tx-link {
+  color: gray;
+  margin: 15px 0;
 }

@@ -3,24 +3,34 @@
 .home {
   color: var(--text--1);
 
-  &__content {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 1.25rem;
-    flex-wrap: nowrap;
+  &__form {
+    max-width: 520px;
+    margin: auto;
   }
 
-  &__assets {
-    flex-grow: 1;
-    .panel {
-      &__header-row {
-        padding-right: calc($actions-width + 1.25rem);
-      }
+  &__form .heading {
+    margin: 1rem 1.5rem 2.5rem 0;
+  }
+
+  & .form_button {
+    margin: 2rem 0;
+  }
+
+  & .pos__summary {
+    width: 100%;
+    padding: 0 1.25rem;
+
+    & td:not(:first-child) {
+      text-align: right;
     }
   }
+}
 
-  &__sidebar {
-    width: 420px;
+.success_page {
+  padding: 100px 45px;
+
+  & .message {
+    text-align: center;
+    line-height: 2rem;
   }
 }
