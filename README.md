@@ -53,13 +53,6 @@ A few notes:
  * If you want to change the smart contract code, you'll need to kill and restart `yarn playground`.
  * The standalone development experience is not the primary usage of the extension. See [Webb3](https://github.com/compound-finance/webb3) for details on running as an embedded extension.
 
-To run this in embedded mode (see Embedding below), you should run the following command in Webb3:
-
-```sh
-# in webb3/
-VITE_WEBB3_MAINNET_URL=http://localhost:8545 VITE_EXTRA_EXTENSIONS=my_extension VITE_MY_EXTENSION_SOURCE=http://localhost:5183/embedded.html yarn dev
-```
-
 ## Deploying
 
 ### Build and Deploying Extension
@@ -82,28 +75,18 @@ Once the app is deployed to IPFS, get the cid (IPFS hash) and make a pull reques
 
 ## Embedding
 
-You can run [Webb3](https://github.com/compound-finance/webb3) locally with a local version of the extension running. First, run this extension:
+First, run this extension:
 
 ```sh
 # in comet-extension/
 yarn dev
 ```
 
-Take a note of the port (it should be 5183). Then run Webb3 with the following env var set:
+Take a note of the port (it should be 5183).
 
-```sh
-# in webb3/
-VITE_EXTRA_EXTENSIONS=my_extension VITE_MY_EXTENSION_SOURCE=http://localhost:5183/embedded.html yarn dev
-```
+Then go to [https://app.compound.finance/extensions/sandbox](https://app.compound.finance/extensions/sandbox)
 
-When the extension loads at [http://localhost:5173](http://localhost:5173), it should load this local extension, instead of the production version.
-
-If you are using the playground, you should also make sure Webb3 uses that URL for reading from the chain:
-
-```sh
-# in webb3/
-VITE_WEBB3_MAINNET_URL=http://localhost:8545 VITE_EXTRA_EXTENSIONS=my_extension VITE_MY_EXTENSION_SOURCE=http://localhost:5183/embedded.html yarn dev
-```
+and on the input box set `http://localhost:5183/embedded.html` and click `Update source`
 
 ## Contributing
 
