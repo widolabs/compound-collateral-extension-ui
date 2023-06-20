@@ -64,6 +64,7 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   useEffect(() => {
     if (rpc) {
+      // @ts-ignore
       rpc.sendRPC({ type: 'getSelectedMarket' }).then(({ selectedMarket }) => {
         selectMarket(selectedMarket);
       });
