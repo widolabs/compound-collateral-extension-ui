@@ -32,6 +32,7 @@ enum SwapStatus {
 }
 
 export default ({ rpc, web3 }: AppProps) => {
+  const [widoSdk, setSdk] = useState<WidoCompoundSdk>();
   const [markets, setMarkets] = useState<Deployments>([]);
   const [isSupportedNetwork, setIsSupportedNetwork] = useState<boolean>(false);
   const [requestWalletChange, setRequestWalletChange] = useState<boolean>(false);
@@ -112,22 +113,15 @@ export default ({ rpc, web3 }: AppProps) => {
   /**
    * Memo to build the SDK whenever the chain/account/market changes
    */
-  const widoSdk = useMemo(() => {
+  useAsyncEffect(async () => {
     if (selectedMarket && isSupportedNetwork) {
       const signer = web3.getSigner().connectUnchecked();
-      return new WidoCompoundSdk(signer, selectedMarket.cometKey)
+      const chainId = await web3.getNetwork()
+      const sdk = new WidoCompoundSdk(signer, selectedMarket.cometKey);
+      setChainId(chainId.chainId);
+      setSdk(sdk)
     }
   }, [web3, account, selectedMarket, isSupportedNetwork, timer]);
-
-  /**
-   * Load chain Id
-   */
-  useAsyncEffect(async () => {
-    if (web3) {
-      const chainId = await web3.getNetwork()
-      setChainId(chainId.chainId);
-    }
-  }, [web3, timer]);
 
   /**
    * Logic callback when selecting `fromToken`
