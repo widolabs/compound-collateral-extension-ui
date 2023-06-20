@@ -46,6 +46,7 @@ export default ({ rpc, web3 }: AppProps) => {
   const [currentPosition, setCurrentPosition] = useState<Position | undefined>();
   const [predictedPosition, setPredictedPosition] = useState<Position | undefined>();
   const [isExecuting, setIsExecuting] = useState<boolean>(false);
+  const [notEnoughBalance, setNotEnoughBalance] = useState<boolean>(false);
   const [chainId, setChainId] = useState<number>(0);
   const [txHash, setTxHash] = useState<string>("");
   const [swapStatus, setSwapStatus] = useState<SwapStatus>(SwapStatus.Preparing);
@@ -290,16 +291,31 @@ export default ({ rpc, web3 }: AppProps) => {
       setUserAssets(assets);
     }
   }
+
   /**
    * Effect to manage quoting logic
    */
   useEffect(() => {
     if (selectedFromToken && selectedToToken && amount) {
+      if(!enoughBalance()){
+        setNotEnoughBalance(true);
+        return;
+      }
+      setNotEnoughBalance(false);
       setLoading(true);
       setPredictedPosition(undefined);
       quote()
     }
   }, [selectedFromToken, selectedToToken, amount])
+
+  /**
+   * Checks whether the user has enough balance to swap the given amount
+   */
+  const enoughBalance = () => {
+    const fromTokenBalance = getFromTokenBalance()
+    const fromAmount = getFromAmount();
+    return fromTokenBalance.gte(fromAmount);
+  }
 
   /**
    * Debounced quote function
@@ -384,6 +400,7 @@ export default ({ rpc, web3 }: AppProps) => {
           swapStatus == SwapStatus.Preparing
           &&
           <HomePage
+            notEnoughBalance={notEnoughBalance}
             showMarketSelector={showMarketSelector}
             selectedMarket={selectedMarket}
             markets={markets}

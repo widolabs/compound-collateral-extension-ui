@@ -27,6 +27,7 @@ interface HomePageProps {
   baseTokenSymbol: string | undefined
   markets: Deployments
   showMarketSelector: boolean
+  notEnoughBalance: boolean
   selectedMarket: Deployment | undefined
   onSelectMarket: (market: Deployment) => void
   isExecuting: boolean
@@ -54,6 +55,7 @@ export function HomePage(
     baseTokenSymbol,
     markets,
     showMarketSelector,
+    notEnoughBalance,
     selectedMarket,
     onSelectMarket,
     isExecuting,
@@ -135,6 +137,11 @@ export function HomePage(
               showBalance={false}
             />
           </div>
+          {
+            notEnoughBalance
+            &&
+            <div className="panel__row panel__row__center">You don’t have enough collateral to perform this action</div>
+          }
           <QuoteExpectedAmounts
             fromToken={fromToken}
             toToken={toToken}
