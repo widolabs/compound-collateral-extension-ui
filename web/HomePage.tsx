@@ -26,6 +26,7 @@ interface HomePageProps {
   predictedPosition: Position | undefined
   baseTokenSymbol: string | undefined
   markets: Deployments
+  showMarketSelector: boolean
   selectedMarket: Deployment | undefined
   onSelectMarket: (market: Deployment) => void
   isExecuting: boolean
@@ -52,6 +53,7 @@ export function HomePage(
     predictedPosition,
     baseTokenSymbol,
     markets,
+    showMarketSelector,
     selectedMarket,
     onSelectMarket,
     isExecuting,
@@ -65,7 +67,7 @@ export function HomePage(
           <div className="panel__row">
             <h6 className="L2 heading text-color--1">Swap collateral</h6>
             {
-              selectedMarket
+              showMarketSelector && selectedMarket
                 ?
                 <MarketSelector
                   value={selectedMarket}

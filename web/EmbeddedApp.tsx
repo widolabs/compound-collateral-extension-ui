@@ -6,13 +6,14 @@ import { useRPC } from './lib/useRPC';
 import { useWeb3 } from './lib/useWeb3';
 
 function EmbeddedApp() {
-  const web3 = useWeb3(useRPC().sendRPC);
+  const rpc = useRPC();
+  const web3 = useWeb3(rpc.sendRPC);
 
-  return <App web3={web3} />
+  return <App rpc={rpc} web3={web3}/>
 }
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <EmbeddedApp />
+    <EmbeddedApp/>
   </React.StrictMode>
 )

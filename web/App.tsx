@@ -17,6 +17,8 @@ import { BigNumber } from 'ethers';
 import { formatAmount, getAmountParts, getDecimals, getTokenUnit, ZERO } from './lib/utils';
 import { SuccessPage } from './SuccessPage';
 import { FailedPage } from './FailedPage';
+import { usePoll } from './lib/usePoll';
+import { SelectedMarket } from '@compound-finance/comet-extension/dist/CometState';
 
 interface AppProps {
   rpc?: RPC
@@ -32,6 +34,7 @@ enum SwapStatus {
 export default ({ rpc, web3 }: AppProps) => {
   const [markets, setMarkets] = useState<Deployments>([]);
   const [isSupportedNetwork, setIsSupportedNetwork] = useState<boolean>(false);
+  const [requestWalletChange, setRequestWalletChange] = useState<boolean>(false);
   const [selectedMarket, setSelectedMarket] = useState<Deployment | undefined>();
   const [account, setAccount] = useState<string | null>(null);
   const [selectedFromToken, setSelectedFromToken] = useState("");
@@ -46,8 +49,64 @@ export default ({ rpc, web3 }: AppProps) => {
   const [chainId, setChainId] = useState<number>(0);
   const [txHash, setTxHash] = useState<string>("");
   const [swapStatus, setSwapStatus] = useState<SwapStatus>(SwapStatus.Preparing);
+  const timer = usePoll(!!account ? 30000 : 5000);
 
   const deployments = WidoCompoundSdk.getDeployments();
+
+  const showMarketSelector = useMemo(() => {
+    return !rpc;
+  }, [rpc]);
+
+  /**
+   * Initial load of the current selected market
+   */
+  useEffect(() => {
+    if (rpc) {
+      rpc.sendRPC({ type: 'getSelectedMarket' }).then(({ selectedMarket }) => {
+        selectMarket(selectedMarket);
+      });
+    }
+  }, [rpc])
+
+  /**
+   * Event subscribing for market changes
+   */
+  useAsyncEffect(async () => {
+    if (rpc) {
+      rpc.on({
+        setSelectedMarket: async (msg) => {
+          selectMarket(msg.selectedMarket);
+        }
+      });
+    }
+  }, [rpc, deployments, chainId]);
+
+  /**
+   * Logic to internally select a market from the Compound event details
+   * @param selectedMarket
+   */
+  const selectMarket = (selectedMarket: SelectedMarket) => {
+    const market = deployments.find(m => {
+      return m.chainId == selectedMarket.chainId && m.address == selectedMarket.marketAddress
+    });
+    if (market) {
+      setSelectedMarket(market);
+      if (selectedMarket.chainId !== chainId) {
+        setRequestWalletChange(true);
+      }
+    }
+  }
+
+  /**
+   * Effect to check if the selected chain is already good, so we remove the message
+   */
+  useEffect(() => {
+    if (selectedMarket) {
+      if (selectedMarket.chainId === chainId) {
+        setRequestWalletChange(false);
+      }
+    }
+  }, [selectedMarket, chainId]);
 
   /**
    * Memo to build the SDK whenever the chain/account/market changes
@@ -57,7 +116,7 @@ export default ({ rpc, web3 }: AppProps) => {
       const signer = web3.getSigner().connectUnchecked();
       return new WidoCompoundSdk(signer, selectedMarket.cometKey)
     }
-  }, [web3, account, selectedMarket, isSupportedNetwork]);
+  }, [web3, account, selectedMarket, isSupportedNetwork, timer]);
 
   /**
    * Load chain Id
@@ -67,7 +126,7 @@ export default ({ rpc, web3 }: AppProps) => {
       const chainId = await web3.getNetwork()
       setChainId(chainId.chainId);
     }
-  }, [web3]);
+  }, [web3, timer]);
 
   /**
    * Logic callback when selecting `fromToken`
@@ -199,8 +258,10 @@ export default ({ rpc, web3 }: AppProps) => {
     const isSupported = supportedMarkets.length > 0;
     setIsSupportedNetwork(isSupported);
     setMarkets(supportedMarkets)
-    setSelectedMarket(isSupported ? supportedMarkets[0] : undefined)
-  }, [web3]);
+    if (showMarketSelector) {
+      setSelectedMarket(isSupported ? supportedMarkets[0] : undefined)
+    }
+  }, [web3, showMarketSelector]);
 
   /**
    * Async effect to keep account updated
@@ -302,9 +363,14 @@ export default ({ rpc, web3 }: AppProps) => {
   };
 
   // guard clauses
+  if (requestWalletChange) {
+    return <div className="panel__row panel__row__center">
+      <h1 style={{ color: "white", margin: "3rem" }}>Switch wallet to market chain</h1>
+    </div>;
+  }
   if (!isSupportedNetwork) {
     return <div className="panel__row panel__row__center">
-      <h1 style={{color: "white", margin: "3rem"}}>Unsupported network</h1>
+      <h1 style={{ color: "white", margin: "3rem" }}>Unsupported network</h1>
     </div>;
   }
   if (!account) {
@@ -318,6 +384,7 @@ export default ({ rpc, web3 }: AppProps) => {
           swapStatus == SwapStatus.Preparing
           &&
           <HomePage
+            showMarketSelector={showMarketSelector}
             selectedMarket={selectedMarket}
             markets={markets}
             onSelectMarket={setSelectedMarket}
