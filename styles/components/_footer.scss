@@ -28,7 +28,10 @@
   }
 
   &__links {
+    margin-top: 2.5rem;
+
     a {
+      padding: 0 2rem;
       color: var(--text--2);
       font-size: 14px;
       letter-spacing: 0;
@@ -43,7 +46,6 @@
       &:hover {
         color: var(--text--supply);
         text-decoration: none;
-        padding-bottom: 0.5rem;
       }
     }
   }

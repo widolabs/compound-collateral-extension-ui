@@ -165,7 +165,11 @@ export function HomePage(
             predictedPosition={predictedPosition}
             baseTokenSymbol={baseTokenSymbol}
           />
-        </div>
+          <div className="panel__row footer__links">
+            <a href="https://www.joinwido.com/" target="_blank">Learn about Wido</a>
+            <a href="https://forms.gle/oxbgU2hnvzambjqDA" target="_blank">Provide feedback</a>
+          </div>
+          </div>
       </div>
     </div>
   );
