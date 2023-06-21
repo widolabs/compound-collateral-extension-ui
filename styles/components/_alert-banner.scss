@@ -16,3 +16,15 @@
     display: none;
   }
 }
+
+.beta-alert {
+
+  & p {
+    font-size: 12px;
+  }
+
+  color: black;
+  border-radius: 25px;
+  background-color: #ffa947;
+  margin: 0 1.25rem;
+}

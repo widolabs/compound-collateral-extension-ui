@@ -66,6 +66,9 @@ export function HomePage(
     <div className="home__content">
       <div className="home__form">
         <div className="panel">
+          <div className="panel__row beta-alert">
+            <p>This Extension is currently in BETA. Please proceed with caution</p>
+          </div>
           <div className="panel__row">
             <h6 className="L2 heading text-color--1">Swap collateral</h6>
             {
