@@ -35,7 +35,7 @@ export function getAmountParts(amount: BigNumber, decimals: number): {
     decimalPartString = "0".repeat(leftZeros) + decimalPartString
   }
   return {
-    integer: integerPart.toString(),
+    integer: integerPart.toNumber().toLocaleString(),
     decimal: decimalPartString
   }
 }

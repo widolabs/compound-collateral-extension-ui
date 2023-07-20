@@ -11,8 +11,10 @@ interface Props {
 
 export function PositionSummary({ currentPosition, predictedPosition, baseTokenSymbol }: Props) {
   const format = (number: number): string => {
-    if(!number) return ""
-    return number.toFixed(4) + " " + baseTokenSymbol?.toUpperCase()
+    if (!number) return ""
+    return number.toLocaleString('en-US', { maximumFractionDigits: 4 })
+      + " "
+      + baseTokenSymbol?.toUpperCase()
   }
 
   return (
