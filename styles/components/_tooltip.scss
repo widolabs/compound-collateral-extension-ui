@@ -77,3 +77,29 @@
     flex-direction: column;
   }
 }
+
+.hover-tooltip {
+  position: relative;
+  display: inline-block;
+
+  & .hover-tooltiptext {
+    visibility: hidden;
+    width: 220px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+
+    left: -100px;
+    top: 10px;
+  }
+
+  &:hover .hover-tooltiptext {
+    visibility: visible;
+  }
+}

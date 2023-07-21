@@ -50,11 +50,10 @@ export function QuoteExpectedAmounts(
         &&
         <div className="panel__row">
           <Label text="Fees"/>
-          <label
-            className="label text-color--1"
-            title={`Flash loan provider takes ~ ${fees.providerFee} ${toToken}($${fees.providerFeeUsd.toFixed(2)}) and Wido takes ${fees.widoFee} ${fromToken}($${fees.widoFeeUsd.toFixed(2)})`}>
+          <label className="label hover-tooltip text-color--1">
             ~ {fees.totalUsd.toFixed(2)} USD&nbsp;
-            <InfoSolid className="svg--icon--2" style={{ width: "15px", height: "15px", cursor: "pointer" }}/>
+            <InfoSolid className="svg--icon--2" style={{ width: "15px", height: "15px" }}/>
+            <span className="hover-tooltiptext">Flash loan provider takes {fees.providerFee} {toToken}(~${fees.providerFeeUsd.toFixed(2)}) and Wido takes {fees.widoFee} {fromToken}(~${fees.widoFeeUsd.toFixed(2)})</span>
           </label>
         </div>
       }
