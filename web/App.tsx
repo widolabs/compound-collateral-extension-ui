@@ -376,7 +376,9 @@ export default ({ rpc, web3 }: AppProps) => {
   // guard clauses
   if (requestWalletChange) {
     return <div className="panel__row panel__row__center">
-      <h1 style={{ color: "white", margin: "3rem" }}>Switch wallet to market chain</h1>
+      <h1 style={{ color: "white", margin: "3rem" }}>
+        Please, ensure the correct Compound Market is selected, and that your wallet is connected to the same network.
+      </h1>
     </div>;
   }
   if (!isSupportedNetwork) {
