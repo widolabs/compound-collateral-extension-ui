@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/browser';
+import { CaptureConsole } from '@sentry/integrations';
 import "../styles/main.scss";
 import { RPC } from "@compound-finance/comet-extension";
 import { useEffect, useMemo, useState } from "react";
@@ -31,7 +33,24 @@ enum SwapStatus {
   Failed,
 }
 
+const log = (error: any) => {
+  console.error(error);
+  throw error;
+}
+
 export default ({ rpc, web3 }: AppProps) => {
+  // Enable Sentry to track any error on the UI
+  Sentry.onLoad(function () {
+    Sentry.init({
+      dsn: "https://aee31be56eaf45e29a9e2e8f8161b823@o1164952.ingest.sentry.io/4505566454939648",
+      integrations: [
+        new CaptureConsole({
+          levels: ['error']
+        })
+      ],
+    });
+  });
+
   const [widoSdk, setSdk] = useState<WidoCompoundSdk>();
   const [markets, setMarkets] = useState<Deployments>([]);
   const [isSupportedNetwork, setIsSupportedNetwork] = useState<boolean>(false);
@@ -187,7 +206,7 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   const executeSwap = async () => {
     if (swapQuote && widoSdk && isSupportedNetwork) {
-      const txHash = await widoSdk.swapCollateral(swapQuote);
+      const txHash = await widoSdk.swapCollateral(swapQuote).catch(log);
       setIsExecuting(true);
       setTxHash(txHash);
       web3.waitForTransaction(txHash)
@@ -282,7 +301,7 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   const loadUserAssets = async () => {
     if (widoSdk && isSupportedNetwork) {
-      const assets = await widoSdk.getUserCollaterals();
+      const assets = await widoSdk.getUserCollaterals().catch(log);
       setUserAssets(assets);
     }
   }
@@ -292,7 +311,7 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   useEffect(() => {
     if (selectedFromToken && selectedToToken && amount) {
-      if(!enoughBalance()){
+      if (!enoughBalance()) {
         setNotEnoughBalance(true);
         return;
       }
@@ -322,10 +341,12 @@ export default ({ rpc, web3 }: AppProps) => {
         selectedFromToken,
         selectedToToken,
         fromAmount
-      ).then((response) => {
-        setLoading(false);
-        return response;
-      })
+      )
+        .then((response) => {
+          setLoading(false);
+          return response;
+        })
+        .catch(log);
       setSwapQuote(quote)
       // Compute predicted position
       const predictedPosition = await widoSdk.getUserPredictedPosition(quote);
@@ -338,7 +359,7 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   useAsyncEffect(async () => {
     if (widoSdk && selectedFromToken) {
-      const currentPosition = await widoSdk.getUserCurrentPosition();
+      const currentPosition = await widoSdk.getUserCurrentPosition().catch(log);
       setCurrentPosition(currentPosition);
     }
   }, [selectedFromToken, widoSdk]);
