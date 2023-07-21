@@ -31,6 +31,7 @@ interface HomePageProps {
   selectedMarket: Deployment | undefined
   onSelectMarket: (market: Deployment) => void
   isExecuting: boolean
+  price?: string
   fees?: Fees
 }
 
@@ -59,6 +60,7 @@ export function HomePage(
     selectedMarket,
     onSelectMarket,
     isExecuting,
+    price,
     fees,
   }: HomePageProps
 ) {
@@ -154,7 +156,7 @@ export function HomePage(
             isLoading={isLoading}
             expectedAmount={expectedAmount}
             minimumAmount={minimumAmount}
-            tokenSymbol={toToken}
+            price={price}
             fees={fees}
           />
           <div className="panel__column form_button">
