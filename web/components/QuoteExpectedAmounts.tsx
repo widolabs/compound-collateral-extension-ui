@@ -34,7 +34,7 @@ export function QuoteExpectedAmounts(
       <div className="panel__row">
         <Label text="Price"/>
         <LabelValue
-          text={"~ " + Number(price).toLocaleString("en-US", {maximumFractionDigits: 6}) + " " + toToken + "/" + fromToken}
+          text={"1 " + toToken + " = " + (1 / Number(price)).toLocaleString("en-US", {maximumFractionDigits: 6}) + " " + fromToken}
         />
       </div>
       <div className="panel__row">
