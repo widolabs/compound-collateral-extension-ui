@@ -2,6 +2,7 @@
   "name": "collaterall-swap-extension",
   "version": "0.1.0",
   "type": "module",
+  "homepage": ".",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
