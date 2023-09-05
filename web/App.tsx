@@ -116,6 +116,8 @@ export default ({ rpc, web3 }: AppProps) => {
       if (selectedMarket.chainId !== chainId) {
         setRequestWalletChange(true);
       }
+      cleanInterface();
+      setUserAssets([]);
     }
   }
 
