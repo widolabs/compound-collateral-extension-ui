@@ -36,6 +36,15 @@ export function AssetSelector({
           <OutsideClickHandler onOutsideClick={() => setOpen(false)}>
             <div className="dropdown__content">
               {
+                options.length == 0
+                &&
+                <div>
+                  <div className="market-selector__option__info">
+                    <span className="label text-color--1 L1">Loading assets...</span>
+                  </div>
+                </div>
+              }
+              {
                 options.map((option, index) => (
                   <div
                     key={index}
