@@ -69,6 +69,7 @@ export default ({ rpc, web3 }: AppProps) => {
   const [notEnoughBalance, setNotEnoughBalance] = useState<boolean>(false);
   const [chainId, setChainId] = useState<number>(0);
   const [txHash, setTxHash] = useState<string>("");
+  const [previousChainId, setPreviousChainId] = useState<number>(0);
   const [swapStatus, setSwapStatus] = useState<SwapStatus>(SwapStatus.Preparing);
   const timer = usePoll(!!account ? 30000 : 5000);
 
@@ -87,21 +88,13 @@ export default ({ rpc, web3 }: AppProps) => {
       rpc.sendRPC({ type: 'getSelectedMarket' }).then(({ selectedMarket }) => {
         selectMarket(selectedMarket);
       });
-    }
-  }, [rpc])
-
-  /**
-   * Event subscribing for market changes
-   */
-  useAsyncEffect(async () => {
-    if (rpc) {
       rpc.on({
         setSelectedMarket: async (msg) => {
           selectMarket(msg.selectedMarket);
         }
       });
     }
-  }, [rpc, deployments, chainId]);
+  }, [rpc])
 
   /**
    * Logic to internally select a market from the Compound event details
@@ -139,9 +132,12 @@ export default ({ rpc, web3 }: AppProps) => {
     if (selectedMarket && isSupportedNetwork) {
       const signer = web3.getSigner().connectUnchecked();
       const chainId = await web3.getNetwork()
-      const sdk = new WidoCompoundSdk(signer, selectedMarket.cometKey);
-      setChainId(chainId.chainId);
-      setSdk(sdk)
+      if (previousChainId != chainId.chainId) {
+        const sdk = new WidoCompoundSdk(signer, selectedMarket.cometKey);
+        setChainId(chainId.chainId);
+        setSdk(sdk)
+        setPreviousChainId(chainId.chainId)
+      }
     }
   }, [web3, account, selectedMarket, isSupportedNetwork, timer]);
 
@@ -362,11 +358,11 @@ export default ({ rpc, web3 }: AppProps) => {
    * Fetch current position when `fromToken` is selected
    */
   useAsyncEffect(async () => {
-    if (widoSdk && selectedFromToken && !notEnoughBalance) {
+    if (widoSdk && !notEnoughBalance) {
       const currentPosition = await widoSdk.getUserCurrentPosition().catch(log);
       setCurrentPosition(currentPosition);
     }
-  }, [selectedFromToken, widoSdk, notEnoughBalance]);
+  }, [widoSdk, notEnoughBalance]);
 
   /**
    * Fetch predicted position when quote changes
