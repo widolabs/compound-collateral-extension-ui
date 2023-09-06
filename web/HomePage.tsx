@@ -147,18 +147,20 @@ export function HomePage(
           </div>
           {
             notEnoughBalance
-            &&
-            <div className="panel__row panel__row__center">You don’t have enough collateral to perform this action</div>
+              ?
+              <div className="panel__row panel__row__center">You don’t have enough collateral to perform this
+                action</div>
+              :
+              <QuoteExpectedAmounts
+                fromToken={fromToken}
+                toToken={toToken}
+                isLoading={isLoading}
+                expectedAmount={expectedAmount}
+                minimumAmount={minimumAmount}
+                price={price}
+                fees={fees}
+              />
           }
-          <QuoteExpectedAmounts
-            fromToken={fromToken}
-            toToken={toToken}
-            isLoading={isLoading}
-            expectedAmount={expectedAmount}
-            minimumAmount={minimumAmount}
-            price={price}
-            fees={fees}
-          />
           <div className="panel__column form_button">
             <button className="button button--large button--supply" onClick={onSwap} disabled={disabledButton}>
               {

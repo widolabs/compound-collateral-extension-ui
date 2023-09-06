@@ -339,20 +339,22 @@ export default ({ rpc, web3 }: AppProps) => {
   const quote = useDebouncedCallback(async () => {
     if (widoSdk && isSupportedNetwork) {
       const fromAmount = getFromAmount();
-      const quote = await widoSdk.getCollateralSwapRoute(
+      await widoSdk.getCollateralSwapRoute(
         selectedFromToken,
         selectedToToken,
         fromAmount
       )
-        .then((response) => {
-          setLoading(false);
-          return response;
+        .then((quote) => {
+          // if notEnoughBalance is active now, it means the user
+          // increased the amount after the quote started
+          if (!notEnoughBalance) {
+            setSwapQuote(quote)
+          }
         })
-        .catch(log);
-      setSwapQuote(quote)
-      // Compute predicted position
-      const predictedPosition = await widoSdk.getUserPredictedPosition(quote);
-      setPredictedPosition(predictedPosition);
+        .catch(log)
+        .finally(() => {
+          setLoading(false);
+        })
     }
   }, 1000);
 
@@ -360,11 +362,21 @@ export default ({ rpc, web3 }: AppProps) => {
    * Fetch current position when `fromToken` is selected
    */
   useAsyncEffect(async () => {
-    if (widoSdk && selectedFromToken) {
+    if (widoSdk && selectedFromToken && !notEnoughBalance) {
       const currentPosition = await widoSdk.getUserCurrentPosition().catch(log);
       setCurrentPosition(currentPosition);
     }
-  }, [selectedFromToken, widoSdk]);
+  }, [selectedFromToken, widoSdk, notEnoughBalance]);
+
+  /**
+   * Fetch predicted position when quote changes
+   */
+  useAsyncEffect(async () => {
+    if (widoSdk && swapQuote && !notEnoughBalance) {
+      const predictedPosition = await widoSdk.getUserPredictedPosition(swapQuote).catch(log);
+      setPredictedPosition(predictedPosition);
+    }
+  }, [swapQuote, widoSdk, notEnoughBalance]);
 
   /**
    * Computes formatted amount to be shown for the quote's expected amounts
@@ -394,6 +406,9 @@ export default ({ rpc, web3 }: AppProps) => {
     setSelectedToToken("");
     setAmount("");
     setSwapStatus(SwapStatus.Preparing);
+    setCurrentPosition(undefined);
+    setPredictedPosition(undefined);
+    setNotEnoughBalance(false);
   };
 
   // guard clauses
