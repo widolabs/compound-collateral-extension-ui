@@ -19,7 +19,6 @@ import { BigNumber } from 'ethers';
 import { formatAmount, getAmountParts, getDecimals, getTokenUnit, ZERO } from './lib/utils';
 import { SuccessPage } from './SuccessPage';
 import { FailedPage } from './FailedPage';
-import { usePoll } from './lib/usePoll';
 import { SelectedMarket } from '@compound-finance/comet-extension/dist/CometState';
 
 interface AppProps {
@@ -70,9 +69,7 @@ export default ({ rpc, web3 }: AppProps) => {
   const [notEnabledMarket, setNotEnabledMarket] = useState<boolean>(false);
   const [chainId, setChainId] = useState<number>(0);
   const [txHash, setTxHash] = useState<string>("");
-  const [previousChainId, setPreviousChainId] = useState<number>(0);
   const [swapStatus, setSwapStatus] = useState<SwapStatus>(SwapStatus.Preparing);
-  const timer = usePoll(!!account ? 30000 : 5000);
 
   const deployments = WidoCompoundSdk.getDeployments();
 
@@ -133,18 +130,18 @@ export default ({ rpc, web3 }: AppProps) => {
    * Memo to build the SDK whenever the chain/account/market changes
    */
   useAsyncEffect(async () => {
+    await buildSdk()
+  }, [web3, account, selectedMarket, isSupportedNetwork]);
+
+  const buildSdk = async () => {
     if (selectedMarket && isSupportedNetwork) {
       const signer = web3.getSigner().connectUnchecked();
       const chainId = await web3.getNetwork()
-      if (previousChainId != chainId.chainId) {
-        const sdk = new WidoCompoundSdk(signer, selectedMarket.cometKey);
-        setChainId(chainId.chainId);
-        setSdk(sdk)
-        setPreviousChainId(chainId.chainId)
-      }
+      const sdk = new WidoCompoundSdk(signer, selectedMarket.cometKey);
+      setChainId(chainId.chainId);
+      setSdk(sdk)
     }
-  }, [web3, account, selectedMarket, isSupportedNetwork, timer]);
-
+  }
   /**
    * Logic callback when selecting `fromToken`
    * @param selection
@@ -413,10 +410,15 @@ export default ({ rpc, web3 }: AppProps) => {
 
   // guard clauses
   if (requestWalletChange) {
-    return <div className="panel__row panel__row__center">
-      <h1 style={{ color: "white", margin: "3rem" }}>
-        Please, ensure the correct Compound Market is selected, and that your wallet is connected to the same network.
-      </h1>
+    return <div className="panel__col">
+      <div className="panel__row panel__row__center">
+        <h1 style={{ color: "white", margin: "3rem" }}>
+          Please, ensure the correct Compound Market is selected, and that your wallet is connected to the same network.
+        </h1>
+      </div>
+      <div className="panel__row panel__row__center">
+        <button className="button button--large button--supply" onClick={buildSdk}>I switched the network!</button>
+      </div>
     </div>;
   }
   if (notEnabledMarket) {
