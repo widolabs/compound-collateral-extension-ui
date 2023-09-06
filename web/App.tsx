@@ -67,6 +67,7 @@ export default ({ rpc, web3 }: AppProps) => {
   const [predictedPosition, setPredictedPosition] = useState<Position | undefined>();
   const [isExecuting, setIsExecuting] = useState<boolean>(false);
   const [notEnoughBalance, setNotEnoughBalance] = useState<boolean>(false);
+  const [notEnabledMarket, setNotEnabledMarket] = useState<boolean>(false);
   const [chainId, setChainId] = useState<number>(0);
   const [txHash, setTxHash] = useState<string>("");
   const [previousChainId, setPreviousChainId] = useState<number>(0);
@@ -111,6 +112,9 @@ export default ({ rpc, web3 }: AppProps) => {
       }
       cleanInterface();
       setUserAssets([]);
+      setNotEnabledMarket(false);
+    } else {
+      setNotEnabledMarket(true);
     }
   }
 
@@ -412,6 +416,13 @@ export default ({ rpc, web3 }: AppProps) => {
     return <div className="panel__row panel__row__center">
       <h1 style={{ color: "white", margin: "3rem" }}>
         Please, ensure the correct Compound Market is selected, and that your wallet is connected to the same network.
+      </h1>
+    </div>;
+  }
+  if (notEnabledMarket) {
+    return <div className="panel__row panel__row__center">
+      <h1 style={{ color: "white", margin: "3rem" }}>
+        This market is not supported. Please select a supported one.
       </h1>
     </div>;
   }
