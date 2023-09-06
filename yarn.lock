@@ -1506,10 +1506,10 @@
     "@ethersproject/providers" "^5"
     "@web3-react/types" "^8.0.20-beta.0"
 
-"@widolabs/collateral-swap-sdk@^0.2.6":
-  version "0.2.6"
-  resolved "https://registry.yarnpkg.com/@widolabs/collateral-swap-sdk/-/collateral-swap-sdk-0.2.6.tgz#7629ebf95271eb491f6bc566889e0ad4c7d39602"
-  integrity sha512-H0PcRTIbovLhzXjHCUMCyV89iTMcGJv2JZTlB8TXYJKLxt9MUaamslhp4PfavEEAPenUQFjlgppNd8Lw/MKyNw==
+"@widolabs/collateral-swap-sdk@0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@widolabs/collateral-swap-sdk/-/collateral-swap-sdk-0.3.0.tgz#4dda4b5c4792a152103fc12e0f5014e9b29fde00"
+  integrity sha512-2WNNFiRMuEbUhswGfRA8mLKMO9gLd3EaDyT5pUuTHzPyftdBlpwLuZao6UbRZro/o02mEZkImlsWQTEI558kLw==
 
 abort-controller@^3.0.0:
   version "3.0.0"
