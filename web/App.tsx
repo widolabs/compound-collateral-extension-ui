@@ -135,7 +135,11 @@ export default ({ rpc, web3 }: AppProps) => {
   }, [selectedMarket, chainId]);
 
   const buildSdk = async () => {
-    if (selectedMarket && isSupportedNetwork) {
+    const currentChainId = await web3.getSigner().getChainId();
+    const supportedMarkets = deployments.filter(d => d.chainId === currentChainId);
+    const isSupported = supportedMarkets.length > 0;
+    setIsSupportedNetwork(isSupported);
+    if (selectedMarket && isSupported) {
       const signer = web3.getSigner().connectUnchecked();
       const _chainId = await web3.getNetwork()
       const sdk = new WidoCompoundSdk(signer, selectedMarket.cometKey);
@@ -143,6 +147,7 @@ export default ({ rpc, web3 }: AppProps) => {
       setSdk(sdk);
     }
   }
+
   /**
    * Logic callback when selecting `fromToken`
    * @param selection
