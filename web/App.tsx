@@ -372,8 +372,17 @@ export default ({ rpc, web3 }: AppProps) => {
    */
   useAsyncEffect(async () => {
     if (widoSdk && swapQuote && !notEnoughBalance) {
-      const predictedPosition = await widoSdk.getUserPredictedPosition(swapQuote).catch(log);
-      setPredictedPosition(predictedPosition);
+      widoSdk.getUserPredictedPosition(swapQuote)
+        .then((predictedPosition) => {
+          setPredictedPosition(predictedPosition);
+        })
+        .catch(() => {
+          widoSdk.getUserPredictedPosition(swapQuote)
+            .then((predictedPosition) => {
+              setPredictedPosition(predictedPosition);
+            })
+            .catch(log);
+        });
     }
   }, [swapQuote, widoSdk, notEnoughBalance]);
 
