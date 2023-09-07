@@ -243,6 +243,7 @@ export default ({ rpc, web3 }: AppProps) => {
     if (!amount) return true
     if (isLoading) return true
     if (isExecuting) return true
+    if (Number(amount) <= 0) return true
     const fromTokenBalance = getFromTokenBalance()
     const fromAmount = getFromAmount();
     return fromAmount.gt(fromTokenBalance);
@@ -309,7 +310,7 @@ export default ({ rpc, web3 }: AppProps) => {
    * Effect to manage quoting logic
    */
   useEffect(() => {
-    if (selectedFromToken && selectedToToken && amount) {
+    if (selectedFromToken && selectedToToken && amount && Number(amount) > 0) {
       if (!enoughBalance()) {
         setNotEnoughBalance(true);
         return;
