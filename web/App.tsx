@@ -98,13 +98,21 @@ export default ({ rpc, web3 }: AppProps) => {
    * Logic to internally select a market from the Compound event details
    * @param selectedMarket
    */
-  const selectMarket = (selectedMarket: SelectedMarket) => {
+  const selectMarket = async (selectedMarket: SelectedMarket) => {
     const market = deployments.find(m => {
       return m.chainId == selectedMarket.chainId && m.address == selectedMarket.marketAddress
     });
     if (market) {
       setSelectedMarket(market);
-      if (selectedMarket.chainId !== chainId) {
+      const signer = web3.getSigner().connectUnchecked();
+      const _chainId = await web3.getNetwork()
+      const sdk = new WidoCompoundSdk(signer, market.cometKey);
+      setChainId(_chainId.chainId);
+      setSdk(sdk);
+      if (selectedMarket.chainId === _chainId.chainId) {
+        setRequestWalletChange(false);
+      }
+      else {
         setRequestWalletChange(true);
       }
       cleanInterface();
@@ -126,20 +134,13 @@ export default ({ rpc, web3 }: AppProps) => {
     }
   }, [selectedMarket, chainId]);
 
-  /**
-   * Memo to build the SDK whenever the chain/account/market changes
-   */
-  useAsyncEffect(async () => {
-    await buildSdk()
-  }, [web3, account, selectedMarket, isSupportedNetwork]);
-
   const buildSdk = async () => {
     if (selectedMarket && isSupportedNetwork) {
       const signer = web3.getSigner().connectUnchecked();
-      const chainId = await web3.getNetwork()
+      const _chainId = await web3.getNetwork()
       const sdk = new WidoCompoundSdk(signer, selectedMarket.cometKey);
-      setChainId(chainId.chainId);
-      setSdk(sdk)
+      setChainId(_chainId.chainId);
+      setSdk(sdk);
     }
   }
   /**
@@ -414,11 +415,11 @@ export default ({ rpc, web3 }: AppProps) => {
     return <div className="panel__col">
       <div className="panel__row panel__row__center">
         <h1 style={{ color: "white", margin: "3rem" }}>
-          Please, ensure the correct Compound Market is selected, and that your wallet is connected to the same network.
+          Please, ensure that your wallet is connected to the same network of the selected market.
         </h1>
       </div>
       <div className="panel__row panel__row__center">
-        <button className="button button--large button--supply" onClick={buildSdk}>I switched the network!</button>
+        <button className="button button--large button--supply" onClick={buildSdk}>I am in the same network!</button>
       </div>
     </div>;
   }
