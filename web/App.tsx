@@ -106,7 +106,7 @@ export default ({ rpc, web3 }: AppProps) => {
       setSelectedMarket(market);
       const signer = web3.getSigner().connectUnchecked();
       const _chainId = await web3.getNetwork()
-      const sdk = new WidoCompoundSdk(signer, market.cometKey);
+      const sdk = new WidoCompoundSdk(signer, market.cometKey, '<ZEROEX_API_KEY>');
       setChainId(_chainId.chainId);
       setSdk(sdk);
       if (selectedMarket.chainId === _chainId.chainId) {
@@ -142,7 +142,7 @@ export default ({ rpc, web3 }: AppProps) => {
     if (selectedMarket && isSupported) {
       const signer = web3.getSigner().connectUnchecked();
       const _chainId = await web3.getNetwork()
-      const sdk = new WidoCompoundSdk(signer, selectedMarket.cometKey);
+      const sdk = new WidoCompoundSdk(signer, selectedMarket.cometKey, '<ZEROEX_API_KEY>');
       setChainId(_chainId.chainId);
       setSdk(sdk);
     }
